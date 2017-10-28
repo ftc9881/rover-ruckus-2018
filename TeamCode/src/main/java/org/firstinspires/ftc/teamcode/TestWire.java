@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -57,55 +58,79 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Template: Linear OpMode", group="Linear Opmode")  // @Autonomous(...) is the other common choice
-
-public class SonarOpMode extends LinearOpMode {
+@Autonomous(name="TestWire", group="Test")  // @Autonomous(...) is the other common choice
+@Disabled
+public class TestWire extends LinearOpMode {
 
     /* Declare OpMode members. */
     private ElapsedTime runtime = new ElapsedTime();
 
-    I2cDeviceSynch _sonar;
+    Wire _sonar1;
+    Wire _sonar2;
+    Wire _sonar3;
+    long _pingTime;
 
     @Override
     public void runOpMode() {
-        _sonar = hardwareMap.i2cDeviceSynch.get("sonar");
+        _sonar1 = new Wire(hardwareMap, "sonar1", 0xDC);
+        _sonar2 = new Wire(hardwareMap, "sonar2", 0xDE);
+        _sonar3 = new Wire(hardwareMap, "sonar3", 0xE0);
 
-        _sonar.setI2cAddress(I2cAddr.create8bit(0xE0));
 
-//        I2cDeviceSynch.ReadWindow readWindow = new I2cDeviceSynch.ReadWindow (1, 2, I2cDeviceSynch.ReadMode.REPEAT);
-//        _sonar.setReadWindow(readWindow);
-
-        _sonar.engage();
-
-        telemetry.addData("Status", "6");
-        telemetry.addData("getHealthStatus()", _sonar.getHealthStatus());
-        telemetry.addData("getConnectionInfo()", _sonar.getConnectionInfo());
-        telemetry.addData("isArmed()", _sonar.isArmed());
+        telemetry.addData("Status", "1");
         telemetry.update();
 
-        // Wait for the game to start (driver presses PLAY)
         waitForStart();
-        runtime.reset();
+
+        _sonar1.beginWrite(0x51);
+        _sonar1.write(0);
+        _sonar1.endWrite();
+
+        _sonar2.beginWrite(0x51);
+        _sonar2.write(0);
+        _sonar2.endWrite();
+
+        _sonar3.beginWrite(0x51);
+        _sonar3.write(0);
+        _sonar3.endWrite();
+
+        _pingTime = System.currentTimeMillis();
+
+        Wire sonars[] = new Wire[] { _sonar1, _sonar2, _sonar3 };
+        Wire sonar = null;
+
+        int distances[] = new int[3];
+        int sonarIndex = -1;
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-            telemetry.addData("Status", "Run Time: " + runtime.toString());
 
-            _sonar.write8(0, 0x51, I2cWaitControl.ATOMIC);
+            if(System.currentTimeMillis() - _pingTime > 100) {
+                ++sonarIndex;
+                if(sonarIndex >= sonars.length) {
+                    sonarIndex = 0;
+                }
 
-            //_sonar.waitForWriteCompletions(I2cWaitControl.ATOMIC);
+                sonar = sonars[sonarIndex];
 
-            sleep(100);
+                sonar.requestFrom(0, 2);
+                sonar.beginWrite(0x51);
+                sonar.write(0);
+                sonar.endWrite();
 
-            int byte0 = _sonar.read8(1);
-            int byte1 = _sonar.read8(1);
+                _pingTime = System.currentTimeMillis();
+            }
 
-            telemetry.addData("Status", "Byte0: " + byte0);
-            telemetry.addData("Status", "Byte1: " + byte1);
+            if(sonar != null && sonar.responseCount() > 0) {
+                sonar.getResponse();
+                if(sonar.isRead()) {
+                    distances[sonarIndex] = sonar.readHL();
+                }
+            }
+
+            telemetry.addData("Status", "Distances: " + distances[0] + " " + distances[1] + " " + distances[2]);
 
             telemetry.update();
-
-
         }
     }
 }

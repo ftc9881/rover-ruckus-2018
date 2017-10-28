@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -57,79 +58,54 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Wire", group="Linear Opmode")  // @Autonomous(...) is the other common choice
-
-public class SonarOpModeWire extends LinearOpMode {
+@Autonomous(name="TestMaxSonarI2CXL", group="Test Sensors")  // @Autonomous(...) is the other common choice
+public class TestMaxSonarI2CXL extends LinearOpMode {
 
     /* Declare OpMode members. */
     private ElapsedTime runtime = new ElapsedTime();
 
-    Wire _sonar1;
-    Wire _sonar2;
-    Wire _sonar3;
-    long _pingTime;
+    MaxSonarI2CXL _sonarLeft;
+    MaxSonarI2CXL _sonarRight;
+    private SonarArrayManager _sonarManager;
 
     @Override
     public void runOpMode() {
-        _sonar1 = new Wire(hardwareMap, "sonar1", 0xDC);
-        _sonar2 = new Wire(hardwareMap, "sonar2", 0xDE);
-        _sonar3 = new Wire(hardwareMap, "sonar3", 0xE0);
+        _sonarLeft = hardwareMap.get(MaxSonarI2CXL.class, "sonar_left");
+        _sonarRight = hardwareMap.get(MaxSonarI2CXL.class, "sonar_right");
 
+        _sonarLeft.setI2cAddress(I2cAddr.create8bit(0xE0));
+        _sonarRight.setI2cAddress(I2cAddr.create8bit(0xDC));
 
-        telemetry.addData("Status", "1");
+        _sonarManager = new SonarArrayManager();
+        _sonarManager.addSonar("left", _sonarLeft);
+        _sonarManager.addSonar("right", _sonarRight);
+
+//        I2cDeviceSynch.ReadWindow readWindow = new I2cDeviceSynch.ReadWindow (1, 2, I2cDeviceSynch.ReadMode.REPEAT);
+//        _sonar.setReadWindow(readWindow);
+
+        telemetry.addData("Status", "7");
+        telemetry.addData("_sonarLeft.getConnectionInfo()", _sonarLeft.getConnectionInfo());
+        telemetry.addData("_sonarRight.getConnectionInfo()", _sonarRight.getConnectionInfo());
         telemetry.update();
 
+        // Wait for the game to start (driver presses PLAY)
         waitForStart();
+        runtime.reset();
 
-        _sonar1.beginWrite(0x51);
-        _sonar1.write(0);
-        _sonar1.endWrite();
-
-        _sonar2.beginWrite(0x51);
-        _sonar2.write(0);
-        _sonar2.endWrite();
-
-        _sonar3.beginWrite(0x51);
-        _sonar3.write(0);
-        _sonar3.endWrite();
-
-        _pingTime = System.currentTimeMillis();
-
-        Wire sonars[] = new Wire[] { _sonar1, _sonar2, _sonar3 };
-        Wire sonar = null;
-
-        int distances[] = new int[3];
-        int sonarIndex = -1;
+        _sonarManager.startAutoPing(100);
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
+            telemetry.addData("Status", "Run Time: " + runtime.toString());
 
-            if(System.currentTimeMillis() - _pingTime > 100) {
-                ++sonarIndex;
-                if(sonarIndex >= sonars.length) {
-                    sonarIndex = 0;
-                }
+            int distanceLeft = _sonarManager.getDistance("left");
+            int distanceRight = _sonarManager.getDistance("right");
 
-                sonar = sonars[sonarIndex];
-
-                sonar.requestFrom(0, 2);
-                sonar.beginWrite(0x51);
-                sonar.write(0);
-                sonar.endWrite();
-
-                _pingTime = System.currentTimeMillis();
-            }
-
-            if(sonar != null && sonar.responseCount() > 0) {
-                sonar.getResponse();
-                if(sonar.isRead()) {
-                    distances[sonarIndex] = sonar.readHL();
-                }
-            }
-
-            telemetry.addData("Status", "Distances: " + distances[0] + " " + distances[1] + " " + distances[2]);
-
+            telemetry.addData("Status", "Distance left: " + distanceLeft);
+            telemetry.addData("Status", "Distance right: " + distanceRight);
             telemetry.update();
         }
+
+        _sonarManager.stopAutoPing();
     }
 }

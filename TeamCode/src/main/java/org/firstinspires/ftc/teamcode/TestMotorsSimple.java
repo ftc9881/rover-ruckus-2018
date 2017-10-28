@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.GyroSensor;
@@ -12,6 +13,7 @@ import com.qualcomm.robotcore.util.RobotLog;
  * and a for loop.
  */
 @Autonomous(name = "TestMotorsSimple", group = "Test")
+@Disabled
 public class TestMotorsSimple extends LinearOpMode
 {
     protected DcMotor _motorA;
