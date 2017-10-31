@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.util.RobotLog;
 
 /**
@@ -9,15 +11,15 @@ import com.qualcomm.robotcore.util.RobotLog;
  */
 
 class ColorStopper extends DefaultDriver {
-    TCS34725_ColorSensor _sensorRGB;
+    NormalizedColorSensor _sensorRGB;
 
-    int _ambientRed;
-    int _ambientGreen;
-    int _ambientBlue;
+    float _ambientRed;
+    float _ambientGreen;
+    float _ambientBlue;
 
     int _threshold;
 
-    public ColorStopper(TCS34725_ColorSensor sensorRGB, int threshold, DriverIF driver) {
+    public ColorStopper(NormalizedColorSensor sensorRGB, int threshold, DriverIF driver) {
         super(driver);
 
         _sensorRGB = sensorRGB;
@@ -27,9 +29,11 @@ class ColorStopper extends DefaultDriver {
     public void start() {
         super.start();
 
-        _ambientRed = _sensorRGB.redColor();
-        _ambientGreen = _sensorRGB.greenColor();
-        _ambientBlue = _sensorRGB.blueColor();
+        NormalizedRGBA colors = _sensorRGB.getNormalizedColors();
+
+        _ambientRed = colors.red;
+        _ambientGreen = colors.green;
+        _ambientBlue = colors.blue;
 
         RobotLog.d("ColorStopper::start::ambient: " + _ambientRed + " " + _ambientGreen + " " + _ambientBlue);
     }
@@ -38,15 +42,17 @@ class ColorStopper extends DefaultDriver {
         boolean keepGoing = super.keepGoing(position);
 
         if(keepGoing) {
-            int red = _sensorRGB.redColor();
-            int green = _sensorRGB.redColor();
-            int blue = _sensorRGB.redColor();
+            NormalizedRGBA colors = _sensorRGB.getNormalizedColors();
+
+            float red = colors.red;
+            float green = colors.green;
+            float blue = colors.blue;
 
             RobotLog.d("ColorStopper::keepGoing::color: " + red + " " + green + " " + blue);
 
-            int deltaRed = red - _ambientRed;
-            int deltaGreen = green - _ambientGreen;
-            int deltaBlue = blue - _ambientBlue;
+            float deltaRed = red - _ambientRed;
+            float deltaGreen = green - _ambientGreen;
+            float deltaBlue = blue - _ambientBlue;
 
             RobotLog.d("ColorStopper::keepGoing::delta: " + deltaRed + " " + deltaGreen + " " + deltaBlue);
 
@@ -56,15 +62,15 @@ class ColorStopper extends DefaultDriver {
         return keepGoing;
     }
 
-    public int getAmbientRed() {
+    public float getAmbientRed() {
         return _ambientRed;
     }
 
-    public int getAmbientGreen() {
+    public float getAmbientGreen() {
         return _ambientGreen;
     }
 
-    public int getAmbientBlue() {
+    public float getAmbientBlue() {
         return _ambientBlue;
     }
 

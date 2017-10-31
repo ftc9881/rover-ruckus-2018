@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DeviceInterfaceModule;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DigitalChannelController;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ReadWriteFile;
 import com.qualcomm.robotcore.util.RobotLog;
@@ -69,7 +70,7 @@ public abstract class OctobotMain extends LinearOpMode
 //    public Servo _servoShooter = null;
 
     //DeviceInterfaceModule _cdim;
-    TCS34725_ColorSensor _sensorRGB;
+    NormalizedColorSensor _sensorRGB;
 
     public Servo _servoTop = null;
     public Servo _servoBottom = null;
