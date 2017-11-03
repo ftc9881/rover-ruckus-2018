@@ -74,7 +74,7 @@ public class TestMaxSonarI2CXL extends LinearOpMode {
         _sonarRight = hardwareMap.get(MaxSonarI2CXL.class, "sonar_right");
 
         _sonarLeft.setI2cAddress(I2cAddr.create8bit(0xE0));
-        _sonarRight.setI2cAddress(I2cAddr.create8bit(0xDC));
+        _sonarRight.setI2cAddress(I2cAddr.create8bit(0xDE));
 
         _sonarManager = new SonarArrayManager();
         _sonarManager.addSonar("left", _sonarLeft);
