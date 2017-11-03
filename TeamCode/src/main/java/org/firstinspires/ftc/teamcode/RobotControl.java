@@ -51,7 +51,7 @@ public class RobotControl {
     }
 
     public static float convertStickToPower(float stickValue) {
-        return (stickValue > 0 ? 1 : -1) * (float)Math.pow(Math.abs(stickValue), 1.5);
+        return (stickValue > 0 ? 1 : -1) * ((float)Math.pow(Math.abs(stickValue), 7) + (float)(0.5 * Math.abs((stickValue))))/(float)(1.5);
     }
 
     public static void moveWithGyro(int target, float power, DcMotor motorA, DcMotor motorB, DcMotor motorC, DcMotor motorD,
