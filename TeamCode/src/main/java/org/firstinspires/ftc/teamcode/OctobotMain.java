@@ -48,13 +48,7 @@ public abstract class OctobotMain extends LinearOpMode
     protected DcMotor _motorSlide;
     protected DcMotor _motorLift;
     protected DcMotor _motorSpinner;
-//    protected DcMotor _motorShooter;
-//    protected DcMotor _motorScooper;
 
-//    public DigitalChannel _led0 = null;
-//    public DigitalChannel _led1 = null;
-//    public AnalogInput _analog0 = null;
-//    public AnalogInput _analog1 = null;
 
     public DigitalChannel _button0 = null;
     public DigitalChannel _button1 = null;
@@ -62,11 +56,9 @@ public abstract class OctobotMain extends LinearOpMode
     public DigitalChannel _button3 = null;
 
     BNO055IMU _imu;
+    BNO055IMU _imu1;
+    BNO055IMU _imu2;
 
-//    public CRServo _servoRight = null;
-//    public CRServo _servoLeft = null;
-//
-//    public Servo _servoShooter = null;
 
     //DeviceInterfaceModule _cdim;
     TCS34725_ColorSensor _sensorRGB;
@@ -216,8 +208,12 @@ public abstract class OctobotMain extends LinearOpMode
         // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
         // and named "imu".
         _imu = hardwareMap.get(BNO055IMU.class, "imu");
+        _imu1 = hardwareMap.get(BNO055IMU.class, "imu1");
+        _imu2 = hardwareMap.get(BNO055IMU.class, "imu2");
 
         _imu.initialize(parameters);
+        _imu1.initialize(parameters);
+        _imu2.initialize(parameters);
 
         /*
             Initialize RGB sensor
