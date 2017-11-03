@@ -14,6 +14,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DeviceInterfaceModule;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DigitalChannelController;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.util.RobotLog;
 
 /*
@@ -22,16 +24,15 @@ import com.qualcomm.robotcore.util.RobotLog;
  * and a for loop.
  */
 @Autonomous(name = "TestColor", group = "test")
-@Disabled
 public class TestColor extends OctobotMain {
-    TCS34725_ColorSensor _sensorRGB;
+    NormalizedColorSensor _sensorRGB;
     protected ModernRoboticsI2cGyro _gyro;
 
     @Override
     public void runOpMode() throws InterruptedException {
 
         // get a reference to our ColorSensor object.
-        _sensorRGB = new TCS34725_ColorSensor(hardwareMap, "color");
+        _sensorRGB = hardwareMap.get(NormalizedColorSensor.class, "sensor_color");
 
 //        loadCalibration();
 
@@ -39,16 +40,27 @@ public class TestColor extends OctobotMain {
 
         boolean keepGoing = true;
 
-        int lastRed = 0;
-        int lastGreen = 0;
-        int lastBlue = 0;
-        int lastHeading = 10000;
+        float lastRed = 0;
+        float lastGreen = 0;
+        float lastBlue = 0;
 
         while (keepGoing) {
-            int alpha = _sensorRGB.clearColor();
-            int red = _sensorRGB.redColor();
-            int green = _sensorRGB.greenColor();
-            int blue = _sensorRGB.blueColor();
+
+            NormalizedRGBA colors = _sensorRGB.getNormalizedColors();
+
+            /** Use telemetry to display feedback on the driver station. We show the conversion
+             * of the colors to hue, saturation and value, and display the the normalized values
+             * as returned from the sensor.
+             * @see <a href="http://infohost.nmt.edu/tcc/help/pubs/colortheory/web/hsv.html">HSV</a>*/
+
+            float[] hsvValues = new float[3];
+
+            Color.colorToHSV(colors.toColor(), hsvValues);
+
+            float alpha = colors.alpha;
+            float red = colors.red;
+            float green = colors.green;
+            float blue = colors.blue;
 
             int heading = _gyro.getHeading();
 
@@ -57,16 +69,6 @@ public class TestColor extends OctobotMain {
                 lastRed = red;
                 lastBlue = blue;
                 lastGreen = green;
-//                telemetry.addData("Clear", alpha);
-//                telemetry.addData("Red  ", red);
-//                telemetry.addData("Green", green);
-//                telemetry.addData("Blue ", blue);
-//                telemetry.update();
-            }
-
-            if(heading != lastHeading) {
-                RobotLog.d("TestColor::Heading: " + System.currentTimeMillis() + " " + heading);
-                lastHeading = heading;
             }
 
             idle();
