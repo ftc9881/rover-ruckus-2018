@@ -44,14 +44,16 @@ public class IMUDriver extends DefaultDriver {
         Orientation angles = _imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX).toAngleUnit(AngleUnit.DEGREES);
         double heading = angles.firstAngle;
 
-//        RobotLog.d("IMUDriver::getSteeringFactor::heading: " + heading);
+        RobotLog.d("IMUDriver::getSteeringFactor::heading: " + heading);
 
         double difference = heading - _initialHeading;
         difference += (difference > 180) ? -360 : (difference < -180) ? 360 : 0;
 
-//        RobotLog.d("IMUDriver::getSteeringFactor::difference: " + difference);
+        RobotLog.d("IMUDriver::getSteeringFactor::difference: " + difference);
+        RobotLog.d("IMUDriver::getSteeringFactor::_strength: " + _strength);
+        RobotLog.d("IMUDriver::getSteeringFactor::_strafePower: " + _strafePower);
 
-        return Steerage.createPowerSteerage(_power, -difference * _strength, _strafePower);
+        return Steerage.createPowerSteerage(_power, difference * _strength, _strafePower);
     }
 
     @Override

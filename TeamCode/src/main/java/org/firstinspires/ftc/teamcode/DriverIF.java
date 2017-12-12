@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.util.RobotLog;
+
 /**
  * Created by ftc on 2/2/2017.
  */
@@ -37,9 +39,24 @@ public interface DriverIF {
         }
 
         static Steerage createPowerSteerage(double power, double steeringFactor, double strafePower) {
-            double effectivePower = Math.max(power, strafePower);
+            double effectivePower;
 
-            return new Steerage(power - effectivePower * steeringFactor, power + effectivePower * steeringFactor, strafePower);
+            if(power > 0) {
+                effectivePower = Math.max(power, Math.abs(strafePower));
+            }
+            else {
+                effectivePower = Math.max(-power, Math.abs(strafePower));
+            }
+
+            double left = power - effectivePower * steeringFactor;
+            double right =  power + effectivePower * steeringFactor;
+
+            RobotLog.d("Steerage::createPowerSteerage::effectivePower: " + effectivePower);
+            RobotLog.d("Steerage::createPowerSteerage::steeringFactor: " + steeringFactor);
+            RobotLog.d("Steerage::createPowerSteerage::left: " + left);
+            RobotLog.d("Steerage::createPowerSteerage::right: " + right);
+
+            return new Steerage(left, right, strafePower);
         };
 
         public boolean equals(Object object) {

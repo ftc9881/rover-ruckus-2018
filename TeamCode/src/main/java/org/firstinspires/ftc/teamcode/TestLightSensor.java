@@ -38,10 +38,10 @@ public class TestLightSensor extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         _led0 = hardwareMap.digitalChannel.get("led_0");
-        _led0.setMode(DigitalChannelController.Mode.OUTPUT);
+        _led0.setMode(DigitalChannel.Mode.OUTPUT);
 
         _led1 = hardwareMap.digitalChannel.get("led_1");
-        _led1.setMode(DigitalChannelController.Mode.OUTPUT);
+        _led1.setMode(DigitalChannel.Mode.OUTPUT);
 
         _analog0 = hardwareMap.analogInput.get("analog_0");
         _analog1 = hardwareMap.analogInput.get("analog_1");

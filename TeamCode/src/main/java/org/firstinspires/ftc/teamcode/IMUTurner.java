@@ -30,11 +30,15 @@ public class IMUTurner implements TurnerIF {
 
     @Override
     public void start() {
+        RobotLog.d("IMUTurner::start()::A");
+
         Orientation angles = _imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX).toAngleUnit(AngleUnit.DEGREES);
-        /*
-            Flip sign on angle because the IMU is upside down
-         */
-        _initialHeading = -angles.firstAngle;
+
+        RobotLog.d("IMUTurner::angles::" + angles);
+
+        _initialHeading = angles.firstAngle;
+
+        RobotLog.d("IMUTurner::start()::B");
     }
 
     @Override
@@ -44,13 +48,13 @@ public class IMUTurner implements TurnerIF {
 
     @Override
     public double getScaleFactor() {
+        RobotLog.d("IMUTurner::getScaleFactor()::A");
+
         Orientation angles = _imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX).toAngleUnit(AngleUnit.DEGREES);
 
-        /*
-            Flip sign on angle because the IMU is upside down
-         */
+        RobotLog.d("IMUTurner::getScaleFactor()::angles " + angles);
 
-        double absHeading = -angles.firstAngle;
+        double absHeading = angles.firstAngle;
 
 //        RobotLog.d("IMUTurner::getSteeringFactor::absHeading: " + absHeading);
 
@@ -62,6 +66,8 @@ public class IMUTurner implements TurnerIF {
         double difference = _degrees - heading;
         difference += (difference > 180) ? -360 : (difference < -180) ? 360 : 0;
 
+        RobotLog.d("IMUTurner::getScaleFactor()::difference " + difference);
+
 //        RobotLog.d("IMUTurner::getSteeringFactor::difference: " + difference);
 
         double effectiveDegrees = _degrees;
@@ -70,13 +76,23 @@ public class IMUTurner implements TurnerIF {
             effectiveDegrees = 45 * (_degrees > 0 ? 1 : -1);
         }
 
+        RobotLog.d("IMUTurner::getScaleFactor()::effectiveDegrees " + effectiveDegrees);
+
+        RobotLog.d("IMUTurner::getScaleFactor()::B");
+
         if(Math.abs(difference) < _maxError) {
+            RobotLog.d("IMUTurner::getScaleFactor()::C");
+
             return Double.NaN;
         }
         else {
+            RobotLog.d("IMUTurner::getScaleFactor()::D");
+
             double direction = difference > 0 ? 1 : -1;
 
             double fraction = Math.abs(difference / effectiveDegrees);
+
+            RobotLog.d("IMUTurner::getScaleFactor()::fraction " + fraction);
 
 //            RobotLog.d("IMUTurner::getSteeringFactor::fraction: " + fraction);
 
@@ -92,7 +108,8 @@ public class IMUTurner implements TurnerIF {
                 factor = _strength + (1 - _strength) * (fraction - .25) * 2;
             }
 
-//            RobotLog.d("IMUTurner::getSteeringFactor::factor: " + factor);
+            RobotLog.d("IMUTurner::getSteeringFactor()::direction: " + direction);
+            RobotLog.d("IMUTurner::getSteeringFactor()::factor: " + factor);
 
             return direction * factor;
         }

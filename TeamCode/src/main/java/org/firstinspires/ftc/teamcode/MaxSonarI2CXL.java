@@ -85,7 +85,7 @@ public class MaxSonarI2CXL extends I2cDeviceSynchDevice<I2cDeviceSynch> implemen
         _thread = null;
     }
 
-    public int getDistance() {
+    public double getDistance() {
         long currentTimeMillis = System.currentTimeMillis();
         int distance;
 

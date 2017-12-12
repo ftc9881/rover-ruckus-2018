@@ -98,8 +98,8 @@ public class TestMaxSonarI2CXL extends LinearOpMode {
         while (opModeIsActive()) {
             telemetry.addData("Status", "Run Time: " + runtime.toString());
 
-            int distanceLeft = _sonarManager.getDistance("left");
-            int distanceRight = _sonarManager.getDistance("right");
+            double distanceLeft = _sonarManager.getDistance("left");
+            double distanceRight = _sonarManager.getDistance("right");
 
             telemetry.addData("Status", "Distance left: " + distanceLeft);
             telemetry.addData("Status", "Distance right: " + distanceRight);

@@ -7,6 +7,7 @@ import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
@@ -23,16 +24,13 @@ import com.qualcomm.robotcore.util.RobotLog;
  * will drive in a square pattern using sleep() 
  * and a for loop.
  */
-@Autonomous(name = "TestColor", group = "test")
+@TeleOp(name = "TestColor", group = "test")
 public class TestColor extends OctobotMain {
-    NormalizedColorSensor _sensorRGB;
-    protected ModernRoboticsI2cGyro _gyro;
 
     @Override
     public void runOpMode() throws InterruptedException {
 
-        // get a reference to our ColorSensor object.
-        _sensorRGB = hardwareMap.get(NormalizedColorSensor.class, "sensor_color");
+        initialize();
 
 //        loadCalibration();
 
@@ -46,7 +44,7 @@ public class TestColor extends OctobotMain {
 
         while (keepGoing) {
 
-            NormalizedRGBA colors = _sensorRGB.getNormalizedColors();
+            NormalizedRGBA colors = _sensorRGBArm.getNormalizedColors();
 
             /** Use telemetry to display feedback on the driver station. We show the conversion
              * of the colors to hue, saturation and value, and display the the normalized values
@@ -62,13 +60,23 @@ public class TestColor extends OctobotMain {
             float green = colors.green;
             float blue = colors.blue;
 
-            int heading = _gyro.getHeading();
+//            int heading = _gyro.getHeading();
 
             if(red != lastRed || blue != lastBlue || green != lastGreen) {
                 RobotLog.d("TestColor::Colors: " + System.currentTimeMillis() + " " + alpha + " " + red + " " + green + " " + blue);
                 lastRed = red;
                 lastBlue = blue;
                 lastGreen = green;
+
+                telemetry.addData("Red",red);
+                telemetry.addData("Green",green);
+                telemetry.addData("Blue",blue);
+
+                telemetry.addData("Hue", hsvValues[0]);
+                telemetry.addData("Saturation", hsvValues[1]);
+                telemetry.addData("Value",hsvValues[2]);
+
+                telemetry.update();
             }
 
             idle();

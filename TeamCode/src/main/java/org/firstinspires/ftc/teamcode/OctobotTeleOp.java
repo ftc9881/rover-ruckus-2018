@@ -14,10 +14,16 @@ import com.qualcomm.robotcore.hardware.DeviceInterfaceModule;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DigitalChannelController;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
+import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 import java.security.KeyStore;
 
@@ -33,38 +39,72 @@ public class OctobotTeleOp extends OctobotMain {
 
         initialize();
 
+//        resetAllDriveMotorEncoders();
+//        resetNonDriveMotorEncoders();
+//
+//        runUsingEncoders();
+//        runNonDriveUsingEncoders();
+
         /*
             Initialize Vuforia
         */
 
 //        initializeVuforia();
 
-        /*
-            Load "wilhelm" sound file
-         */
-
-       // MediaPlayer mediaPlayer = MediaPlayer.create(hardwareMap.appContext, R.raw.wilhelm);
-
         waitForStart();
 
-        /*
-            Start Vuforia navigaiton
-         */
+        _servoLock.setPosition(.5);
 
-//        startVuforia();
-
-        /*
-            Initialize various state variables
-         */
-
-        boolean gripMode = false;
         boolean rightServoGrip = true;
         boolean reverseMode = false;
-        boolean scooperrunning = false ;
+        boolean isRed = true;
 
-       // boolean prevPusherButtonState = false;
+        float temp;
+
+        float[] hsvValues = new float[3];
+        final float values[] = hsvValues;
+
+        float relicGrabberPosition = 0;
 
         while (opModeIsActive()) {
+
+            /*
+                Button Assignments
+            */
+
+            boolean rightBumper = gamepad1.right_bumper || gamepad2.right_bumper;
+            boolean leftBumper = gamepad1.left_bumper || gamepad2.left_bumper;
+
+            boolean right = gamepad1.dpad_right;
+            boolean left = gamepad1.dpad_left;
+
+            boolean right2 = gamepad2.dpad_right;
+            boolean left2 = gamepad2.dpad_left;
+
+            boolean buttonX = gamepad1.x || gamepad2.x;
+            boolean buttonY = gamepad1.y || gamepad2.y;
+            boolean buttonA = gamepad1.a || gamepad2.a;
+            boolean buttonB = gamepad1.b || gamepad2.b;
+
+            boolean up = gamepad1.dpad_up || gamepad2.dpad_up;
+            boolean down = gamepad1.dpad_down || gamepad2.dpad_down;
+
+            float rightTrigger = gamepad1.right_trigger;
+            float leftTrigger = gamepad1.left_trigger;
+
+            float rightTrigger2 = gamepad2.right_trigger;
+            float leftTrigger2 = gamepad2.left_trigger;
+
+            float leftX = gamepad1.left_stick_x;
+            float leftY = gamepad1.left_stick_y;
+
+            float rightX = gamepad1.right_stick_x;
+            float rightY = gamepad1.right_stick_y;
+
+            float rightY2 = gamepad2.right_stick_y;
+
+            String statusMessage = "OK";
+
             int positionA = _motorA.getCurrentPosition();
             int positionB = _motorB.getCurrentPosition();
             int positionC = _motorC.getCurrentPosition();
@@ -73,63 +113,9 @@ public class OctobotTeleOp extends OctobotMain {
             RobotLog.d("Motor Position " + positionA + " " + positionB + " " + positionC + " " + positionD);
             telemetry.addData("Motor Posistion", positionA + " " + positionB + " " + positionC + " " + positionD);
 
-            boolean rightBumper = gamepad1.right_bumper;
-            boolean leftBumper = gamepad1.left_bumper;
-
             /*
-                Shoot the particle
+                Button Actions
              */
-
-            if (rightBumper) {
-                _motorSpinner.setPower(.2);
-            } else if (leftBumper) {
-                _motorSpinner.setPower(-.2);
-            } else {
-                _motorSpinner.setPower(0);
-            }
-
-            rightServoGrip = !rightServoGrip;
-
-            if(rightBumper || leftBumper) {
-                telemetry.addLine("Spinner Active");
-            }
-
-//            if(gripMode) {
-//                _servoRight.setPower(1);
-//                _servoRight.setDirection(DcMotorSimple.Direction.REVERSE);
-//                _servoLeft.setPower(1);
-//                _servoLeft.setDirection(DcMotorSimple.Direction.FORWARD);
-
-//                if(rightServoGrip) {
-//                    _servoRight.setPower(1);
-//                    _servoRight.setDirection(DcMotorSimple.Direction.REVERSE);
-//                    _servoLeft.setPower(1);
-//                    _servoLeft.setDirection(DcMotorSimple.Direction.FORWARD);
-//                }
-//                else {
-//                    _servoLeft.setPower(1);
-//                    _servoLeft.setDirection(DcMotorSimple.Direction.REVERSE);
-//                    _servoRight.setPower(1);
-//                    _servoRight.setDirection(DcMotorSimple.Direction.FORWARD);
-//                }
-//
-//                rightServoGrip = !rightServoGrip;
-//            }
-
-            telemetry.addData("heading", getCurrentHeading());
-
-            telemetry.addData("Button 0 ", _button0.getState());
-
-            telemetry.addData("Button 1 ", _button1.getState());
-
-            telemetry.addData("Button 2 ", _button2.getState());
-
-            telemetry.addData("Button 3 ", _button3.getState());
-
-            boolean up = gamepad1.dpad_up;
-            boolean down = gamepad1.dpad_down;
-            boolean right = gamepad1.dpad_right;
-            boolean left = gamepad1.dpad_left;
 
             if (right && !_button1.getState()) {
                 _motorSlide.setPower(-1);
@@ -139,57 +125,104 @@ public class OctobotTeleOp extends OctobotMain {
                 _motorSlide.setPower(0);
             }
 
-            if (right || left) {
-                telemetry.addLine("Slide Active");
+            if (right2) {
+                _servoRelic.setPosition(.4f);
+            }
+            else if (left2) {
+                _servoRelic.setPosition(.55f);
+            }
+
+            if (up) {
+                _motorLift.setPower(1);
+            } else if (down && !_button3.getState()) {
+                _motorLift.setPower(-.5);
+            } else{
+                _motorLift.setPower(0);
+            }
+
+            try {
+                NormalizedRGBA colors = _sensorRGB.getNormalizedColors();
+
+                Color.colorToHSV(colors.toColor(), hsvValues);
+
+                float hue = hsvValues[0];
+                float saturation = hsvValues[1];
+
+                if (saturation > .1) {
+                    if (hue >= 0 && hue <= 90) {
+                        isRed = true;
+                    } else if (hue <= 260 && hue >= 120) {
+                        isRed = false;
+                    }
+                }
+            }
+            catch(Exception e) {
+                statusMessage = "Color Sensor Problem";
+                isRed = false;
+            }
+
+            if (buttonY) {
+                if(isRed) {
+                    _servoTop.setPosition(0);
+                }
+                else {
+                    _servoBottom.setPosition(0);
+                }
+            } else if (buttonB) {
+                if(isRed) {
+                    _servoTop.setPosition(1);
+                }
+                else {
+                    _servoBottom.setPosition(1);
+                }
+            }
+
+            if (buttonX) {
+                if(isRed) {
+                    _servoBottom.setPosition(0);
+                }
+                else {
+                    _servoTop.setPosition(0);
+                }
+            } else if (buttonA) {
+                if(isRed) {
+                    _servoBottom.setPosition(1);
+                }
+                else {
+                    _servoTop.setPosition(1);
+                }
+            }
+
+            if (rightBumper) {
+                _motorSpinner.setPower(.3);
+            } else if (leftBumper) {
+                _motorSpinner.setPower(-.3);
             } else {
-                telemetry.addLine("Slide Inactive");
+                _motorSpinner.setPower(0);
             }
 
-            if (gamepad1.y) {
-                _servoTop.setPosition(0);
+//            while(rightTrigger>.3){
+//                balance();
+//            }
+
+            if(rightTrigger2>.5){
+                _servoLock.setPosition(1);
             }
-            else if (gamepad1.b) {
-                _servoTop.setPosition(1);
+            else if(leftTrigger2>.5){
+                _servoLock.setPosition(.5);
             }
 
-            if(gamepad1.x) {
-                _servoBottom.setPosition(0);
-            }
-            else if (gamepad1.a) {
-                _servoBottom.setPosition(1);
-            }
-
-
-            if (up || down) {
-                telemetry.addLine("Lift Active");
+            if (rightY2>.9) {
+                _motorScissor.setPower(-1);
+            } else if (rightY2<-.9) {
+                _motorScissor.setPower(1);
             } else {
-                telemetry.addLine("Lift Inactive");
+                _motorScissor.setPower(0);
             }
 
-//           if(scooperrunning) {
-//               _motorScooper.setPower(-1);
-//           }
-//            else {
-//               _motorScooper.setPower(0);
-//           }
-
-            if (gamepad1.b) {
-                gripMode = true;
-            }
-
-            telemetry.addLine("104");
-
-
-
-            telemetry.addData("Reverse Mode ", reverseMode);
-
-            float leftX = gamepad1.left_stick_x;
-            float leftY = gamepad1.left_stick_y;
-
-            float rightX = gamepad1.right_stick_x;
-            float rightY = gamepad1.right_stick_y;
-
-            float temp;
+            /*
+                Driving
+             */
 
             reverseMode = true;
 
@@ -201,15 +234,6 @@ public class OctobotTeleOp extends OctobotMain {
                 temp = -1 * leftY;
                 leftY = -1 * rightY;
                 rightY = temp;
-            }
-
-            if (up && !_button2.getState()) {
-                _motorLift.setPower(1);
-            }
-            else if (down && !_button3.getState()) {
-                _motorLift.setPower(-.2);
-            } else{
-                _motorLift.setPower(.05);
             }
 
             float Yf = (leftY + rightY) / 2f;
@@ -239,6 +263,21 @@ public class OctobotTeleOp extends OctobotMain {
             float motorCPower = RobotControl.convertStickToPower(frontLeft);
             float motorDPower = RobotControl.convertStickToPower(rearLeft);
 
+            float powerAdjust;
+
+            if(leftTrigger>.3){
+                powerAdjust = .25f;
+            }
+            else {
+                powerAdjust = 1f;
+            }
+
+
+            motorAPower *= powerAdjust;
+            motorBPower *= powerAdjust;
+            motorCPower *= powerAdjust;
+            motorDPower *= powerAdjust;
+
             RobotLog.d("Motor Power " + motorAPower + " " + motorBPower + " " + motorCPower + " " + motorDPower);
             telemetry.addData("Motor Power", motorAPower + " " + motorBPower + " " + motorCPower + " " + motorDPower);
 
@@ -247,30 +286,47 @@ public class OctobotTeleOp extends OctobotMain {
             _motorC.setPower(motorCPower);
             _motorD.setPower(motorDPower);
 
+            NormalizedRGBA colorsArm = _sensorRGBArm.getNormalizedColors();
+
+            Color.colorToHSV(colorsArm.toColor(), hsvValues);
+
             /*
-                If the pusher button is pressed then make a sound
+                Telemetry
              */
 
-            //boolean pusherButtonState = _pusherButton.getState();
+            telemetry.addLine("Status: " + statusMessage);
 
-            /*if (prevPusherButtonState != pusherButtonState) {
-                if (pusherButtonState) {
-                    mediaPlayer.start();
-                }
+            if (right || left) {
+                telemetry.addLine("Slide Active");
+            } else {
+                telemetry.addLine("Slide Inactive");
             }
-*/
-//            OpenGLMatrix lastLocation = getVuforiaLocation();
-//
-//            /**
-//             * Provide feedback as to where the robot was last located (if we know).
-//             */
-//            if (lastLocation != null) {
-//                telemetry.addData("Vuforia", VuforiaUtil.formatOpenGLMatrix(lastLocation));
-//                RobotLog.d("Vuforia::" + VuforiaUtil.formatOpenGLMatrix(lastLocation));
-//            } else {
-//                telemetry.addData("Vuforia", "Unknown");
-//            }
 
+            if (up || down) {
+                telemetry.addLine("Lift Active");
+            } else {
+                telemetry.addLine("Lift Inactive");
+            }
+
+            if (rightBumper || leftBumper) {
+                telemetry.addLine("Spinner Active");
+            }
+
+            telemetry.addData("Button 0 ", _button0.getState());
+
+            telemetry.addData("Button 1 ", _button1.getState());
+
+            telemetry.addData("Button 2 ", _button2.getState());
+
+            telemetry.addData("Button 3 ", _button3.getState());
+
+            telemetry.addData("isRed", isRed);
+
+            telemetry.addLine("Lift position: " + _motorLift.getCurrentPosition());
+
+            telemetry.addData("Reverse Mode ", reverseMode);
+
+            telemetry.addData("RGB sensor",hsvValues[0] + " " + hsvValues[1] + " " + hsvValues[2]);
             telemetry.update();
 
             sleep(10);
@@ -284,4 +340,3 @@ public class OctobotTeleOp extends OctobotMain {
         stopVuforia();
     }
 }
-

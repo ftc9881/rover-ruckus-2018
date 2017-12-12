@@ -24,7 +24,7 @@ public class SonarArrayManager implements Runnable {
         _sonars.put(sonarID, sonar);
     }
 
-    public int getDistance(String sonarID) {
+    public double getDistance(String sonarID) {
         return _sonars.get(sonarID).getDistance();
     }
 

@@ -14,11 +14,15 @@ public class RobotControl {
     static final int ENCODER_EPSILON = -5;
 
     public static void resetMotorEncoder(DcMotor dcMotor, LinearOpMode opMode) throws InterruptedException {
-        dcMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        while(dcMotor.getCurrentPosition() != 0) {
+        int currentPosition = Integer.MAX_VALUE;
+
+        do {
+            dcMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            currentPosition = dcMotor.getCurrentPosition();
+
             opMode.idle();
-        }
+        } while(currentPosition != 0);
     }
 
     public static void resetAllDriveMotorEncoders(DcMotor motorA, DcMotor motorB, DcMotor motorC, DcMotor motorD, LinearOpMode opMode) throws InterruptedException {
@@ -51,7 +55,8 @@ public class RobotControl {
     }
 
     public static float convertStickToPower(float stickValue) {
-        return (stickValue > 0 ? 1 : -1) * ((float)Math.pow(Math.abs(stickValue), 7) + (float)(0.5 * Math.abs((stickValue))))/(float)(1.5);
+        return (stickValue > 0 ? 1 : -1) * (float)Math.pow(Math.abs(stickValue), 1.5);
+//        return (stickValue > 0 ? 1 : -1) * ((float)Math.pow(Math.abs(stickValue), 10) + (float)(0.4 * Math.abs((stickValue))))/(float)(1.4);
     }
 
 }

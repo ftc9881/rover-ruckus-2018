@@ -8,8 +8,6 @@ package org.firstinspires.ftc.teamcode;
 import android.app.Activity;
 import android.graphics.Color;
 import android.view.View;
-//import com.qualcomm.ftccommon.DbgLog;
-import com.qualcomm.ftcrobotcontroller.R;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -72,7 +70,7 @@ public class TestLightSensor2 extends LinearOpMode {
         // bEnabled represents the state of the LED.
         boolean bEnabled = true;
         // turn the LED on in the beginning, just so user will know that the Sensor is active.
-        _rgbLED.setMode(DigitalChannelController.Mode.OUTPUT);
+        _rgbLED.setMode(DigitalChannel.Mode.OUTPUT);
         // wait one cycle.
 
         sleep(10);
@@ -84,8 +82,11 @@ public class TestLightSensor2 extends LinearOpMode {
         final float values[] = hsvValues;
         // get a reference to the RelativeLayout so we can change the background
         // color of the Robot Controller app to match the hue detected by the RGB Sensor.
+
+        int relativeLayoutID = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
+
         final View relativeLayout = ((Activity)
-                hardwareMap.appContext).findViewById(R.id.RelativeLayout);
+                hardwareMap.appContext).findViewById(relativeLayoutID);
         // bPrevState and bCurrState represent the previous and current state of the button.
         boolean bPrevState = false;
         boolean bCurrState = false;
@@ -133,7 +134,7 @@ public class TestLightSensor2 extends LinearOpMode {
                 }
             });
             // wait a hardware cycle before iterating.
-           sleep(10);
+            sleep(10);
         }
     }
 }

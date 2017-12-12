@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.google.gson.Gson;
+import android.graphics.Color;
+
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -13,10 +14,14 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DeviceInterfaceModule;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DigitalChannelController;
+import com.qualcomm.robotcore.hardware.I2cAddr;
+import com.qualcomm.robotcore.hardware.I2cDevice;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ReadWriteFile;
 import com.qualcomm.robotcore.util.RobotLog;
+import com.qualcomm.robotcore.util.TypeConversion;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
@@ -25,15 +30,23 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
+import org.firstinspires.ftc.robotcore.external.navigation.VuMarkInstanceId;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 
+
+
 import java.io.File;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.util.Arrays;
 
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.Parameters.CameraMonitorFeedback.AXES;
+
 
 /*
  * An example linear op mode where the pushbot
@@ -49,6 +62,7 @@ public abstract class OctobotMain extends LinearOpMode
     protected DcMotor _motorSlide;
     protected DcMotor _motorLift;
     protected DcMotor _motorSpinner;
+    protected DcMotor _motorScissor;
 
 
     public DigitalChannel _button0 = null;
@@ -63,38 +77,44 @@ public abstract class OctobotMain extends LinearOpMode
 
     //DeviceInterfaceModule _cdim;
     NormalizedColorSensor _sensorRGB;
+    NormalizedColorSensor _sensorRGBArm;
 
     public Servo _servoTop = null;
     public Servo _servoBottom = null;
+    public Servo _servoArm = null;
+    public Servo _servoRelic = null;
+    public Servo _servoLock = null;
 
     // we assume that the LED pin of the RGB sensor is connected to
     // digital port 5 (zero indexed).
     static final int RGB_LED_CHANNEL = 5;
 
     VuforiaLocalizer _vuforia;
-    VuforiaTrackables _beacons;
+    VuforiaTrackables _vuforiaTrackables;
 
     static final int BLUE_NEAR = 0;
     static final int RED_FAR = 1;
     static final int BLUE_FAR = 2;
     static final int RED_NEAR = 3;
 
-//    class CalibrationData {
-//        double _analog0Min = 0;
-//        double _analog0Max = .132;
-//
-//        double _analog1Min = 0.0587;
-//        double _analog1Max = 0.2004;
-//
-//        CalibrationData() {
-//        }
-//
-//        public String serialize() {
-//            return new Gson().toJson(this);
-//        }
-//    }
-//
-//    CalibrationData _calibrationData = new CalibrationData();
+    Orientation angles;
+    float pitchAngle;
+    float rollAngle;
+
+    /*
+        IR Sensors
+     */
+
+    SharpDistanceSensor _irSensorLeft;
+    SharpDistanceSensor _irSensorRight;
+
+    /*
+        Sonar sensors
+     */
+
+    public MaxSonarI2CXL _sonarLeft;
+    public MaxSonarI2CXL _sonarRight;
+    public SonarArrayManager _sonarArrayManager;
 
     /**
      * Initialize all sensors, motors, etc.
@@ -129,6 +149,10 @@ public abstract class OctobotMain extends LinearOpMode
         _motorSpinner.setDirection(DcMotor.Direction.REVERSE);
         _motorSpinner.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        _motorScissor = hardwareMap.dcMotor.get("motor_scissor");
+        _motorScissor.setDirection(DcMotor.Direction.REVERSE);
+        _motorScissor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
 
 
 //        RobotControl.resetAllDriveMotorEncoders(_motorA, _motorB, _motorC, _motorD, this);
@@ -140,31 +164,13 @@ public abstract class OctobotMain extends LinearOpMode
         RobotLog.d("OctobotMain::initialize::_motorSlide::" + _motorSlide);
         RobotLog.d("OctobotMain::initialize::_motorLift::" + _motorLift);
         RobotLog.d("OctobotMain::initialize::_motorSpinner::" + _motorSpinner);
-//        RobotLog.d("OctobotMain::initialize::_motorScooper::" + _motorScooper);
-
-        /*
-           Initialize LED's
-         */
-
-//        _led0 = hardwareMap.digitalChannel.get("led_0");
-//        _led0.setMode(DigitalChannelController.Mode.OUTPUT);
-//
-//        _led1 = hardwareMap.digitalChannel.get("led_1");
-//        _led1.setMode(DigitalChannelController.Mode.OUTPUT);
-//
-//        _led0.setState(false);
-//        _led1.setState(false);
-
-        /*
-            Initialize light sensors
-         */
-//
-//        _analog0 = hardwareMap.analogInput.get("analog_0");
-//        _analog1 = hardwareMap.analogInput.get("analog_1");
+        RobotLog.d("OctobotMain::initialize::_motorScissor::" + _motorScissor);
 
         /*
             Initialize pusher button
          */
+
+        RobotLog.d("OctobotMain::initialize::initialize buttons");
 
         _button0 = hardwareMap.digitalChannel.get("button_0");
         _button0.setMode(DigitalChannel.Mode.INPUT);
@@ -182,13 +188,13 @@ public abstract class OctobotMain extends LinearOpMode
             Initialize servos
          */
 
+        RobotLog.d("OctobotMain::initialize::initialize servos");
+
         _servoTop = hardwareMap.servo.get("servo_top");
         _servoBottom = hardwareMap.servo.get("servo_bottom");
-//
-
-//
-//        _servoShooter = hardwareMap.servo.get("servo_shooter");
-//        _servoShooter.setPosition(0);
+        _servoArm = hardwareMap.servo.get("servo_arm");
+        _servoRelic = hardwareMap.servo.get("servo_relic");
+        _servoLock = hardwareMap.servo.get("servo_lock");
 
         /*
             Initialize IMU
@@ -208,138 +214,66 @@ public abstract class OctobotMain extends LinearOpMode
         // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
         // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
         // and named "imu".
-        _imu = hardwareMap.get(BNO055IMU.class, "imu");
+//        _imu = hardwareMap.get(BNO055IMU.class, "imu");
         _imu1 = hardwareMap.get(BNO055IMU.class, "imu1");
-        _imu2 = hardwareMap.get(BNO055IMU.class, "imu2");
-
-        _imu.initialize(parameters);
+//        _imu2 = hardwareMap.get(BNO055IMU.class, "imu2");
+//
+//        RobotLog.d("OctobotMain::initialize::initialize imu");
+//
+//        _imu.initialize(parameters);
+//
+//        RobotLog.d("OctobotMain::initialize::initialize imu1");
+//
         _imu1.initialize(parameters);
-        _imu2.initialize(parameters);
+//
+//        RobotLog.d("OctobotMain::initialize::initialize imu2");
+//
+//        _imu2.initialize(parameters);
 
         /*
             Initialize RGB sensor
         */
 
-        // get a reference to our DeviceInterfaceModule object.
-//        _cdim = hardwareMap.deviceInterfaceModule.get("dim");
-//
-//        // set the digital channel to output mode.
-//        // remember, the Adafruit sensor is actually two devices.
-//        // It's an I2C sensor and it's also an LED that can be turned on or off.
-//        _cdim.setDigitalChannelMode(RGB_LED_CHANNEL, DigitalChannelController.Mode.OUTPUT);
-//
-//        // get a reference to our ColorSensor object.
-//        _sensorRGB = new TCS34725_ColorSensor(hardwareMap, "color");
-//
-//        // turn the LED off in the beginning, just so user will know that the sensor is active.
-//        _cdim.setDigitalChannelState(RGB_LED_CHANNEL, false);
-    }
+        RobotLog.d("OctobotMain::initialize::initialize color sensor");
 
-//    void loadCalibration() {
+        _sensorRGB = hardwareMap.get(NormalizedColorSensor.class, "color_sensor");
+        _sensorRGBArm = hardwareMap.get(NormalizedColorSensor.class, "color_sensor_2");
+
         /*
-            Load calibration data
+            IR Sensors
          */
 
-//        _calibrationData = new Gson().fromJson("OctobotMainCalibration", CalibrationData.class);
+        _irSensorLeft = new SharpDistanceSensor(hardwareMap.analogInput.get("ir_left"),
+                0.061617183,
+                -0.008870024,
+                3.398418633
+        );
 
-//        RobotLog.d("OctobotMain::loadCalibration::analog0 %.4f %.4f", _calibrationData._analog0Min, _calibrationData._analog0Max);
-//        RobotLog.d("OctobotMain::loadCalibration::analog1 %.4f %.4f", _calibrationData._analog1Min, _calibrationData._analog1Max);
-//    }
+        _irSensorRight = new SharpDistanceSensor(hardwareMap.analogInput.get("ir_right"),
+                0.049154276,
+                -0.009550867,
+                7.419945783
+        );
 
-//    void saveCalibration() {
-//        String filename = "AdafruitIMUCalibration.json";
-//        File file = AppUtil.getInstance().getSettingsFile(filename);
-//        ReadWriteFile.writeFile(file, _calibrationData.serialize());
-//    }
-//
-//    void calibrate() throws InterruptedException {
-//        //  Calibrate the light sensor
-//
-//        calibrateLight();
-//    }
+        /*
+            Sonar Sensors
+         */
 
-//    public void calibrateLight() throws InterruptedException {
-//        _led0.setState(true);
-//        _led1.setState(true);
+        _sonarLeft = hardwareMap.get(MaxSonarI2CXL.class, "sonar_left");
+        _sonarRight = hardwareMap.get(MaxSonarI2CXL.class, "sonar_right");
 
-//        _calibrationData._analog0Min = Float.MAX_VALUE;
-//        _calibrationData._analog0Max = -Float.MAX_VALUE;
-//
-//        _calibrationData._analog1Min = Float.MAX_VALUE;
-//        _calibrationData._analog1Max = -Float.MAX_VALUE;
-//
-//        telemetry.addData(">", "Calibrating Light Sensors");
-//        telemetry.update();
-//
-//        long startTime = System.currentTimeMillis();
-//
-//        while (System.currentTimeMillis() - startTime < 15000) {
-////            double voltage0 = _analog0.getVoltage();
-////            double voltage1 = _analog1.getVoltage();
-//
-////            _calibrationData._analog0Min = Math.min(_calibrationData._analog0Min, voltage0);
-////            _calibrationData._analog0Max = Math.max(_calibrationData._analog0Max, voltage0);
-////
-////            _calibrationData._analog1Min = Math.min(_calibrationData._analog1Min, voltage1);
-////            _calibrationData._analog1Max = Math.max(_calibrationData._analog1Max, voltage1);
-//
-//            telemetry.addData("Time left", String.format("%d", (int)(15 - (System.currentTimeMillis() - startTime ) / 1000)));
-//            telemetry.addData("analog0 Range", String.format("%.2f %.2f",_calibrationData._analog0Min, _calibrationData._analog0Max));
-//            telemetry.addData("analog1 Range", String.format("%.2f %.2f",_calibrationData._analog1Min, _calibrationData._analog1Max));
-//            telemetry.update();
-//
-//            RobotLog.d("calibrateLight::analog0 %.4f %.4f  analog1 %.4f %.4f",_calibrationData._analog0Min, _calibrationData._analog0Max, _calibrationData._analog1Min, _calibrationData._analog1Max);
-//
-//            Thread.sleep(10);
-//        }
-//
-//        telemetry.addData(">", "Calibration complete");
-//        telemetry.update();
-//
-//        Thread.sleep(1000);
-//
-//        /*
-//            Bad calibration (or someone forgot), do something reasonable
-//         */
-//
-//        if(_calibrationData._analog0Max - _calibrationData._analog0Min < .05) {
-//            _calibrationData._analog0Max = _calibrationData._analog0Min + (0.1613 - 0.0293);
-//        }
-//
-//        if(_calibrationData._analog1Max - _calibrationData._analog1Min < .05) {
-//            _calibrationData._analog1Max = _calibrationData._analog1Min + (0.2248 - 0.0831);
-//        }
-//
-////        _led0.setState(false);
-////        _led1.setState(false);
-//    }
-//
-//    double getTarget0() {
-//        return (_calibrationData._analog0Min + _calibrationData._analog0Max) / 2;
-//    }
-//
-//    double getTarget1() {
-//        return (_calibrationData._analog1Min + _calibrationData._analog1Max) / 2;
-//    }
+        _sonarLeft.setI2cAddress(I2cAddr.create8bit(0xE0));
+        _sonarRight.setI2cAddress(I2cAddr.create8bit(0xDE));
 
-//    public void calibrateGyro() throws InterruptedException {
-//        _gyro.calibrate();
-//        _gyro.resetZAxisIntegrator();
-//
-//        telemetry.addData(">", "Gyro Calibrating. Do Not move!");
-//        telemetry.update();
-//
-//        while(_gyro.isCalibrating()) {
-//            Thread.sleep(200);
-//            idle();
-//        }
-//
-//        telemetry.addData("Relative Heading", _gyro.getIntegratedZValue());
-//        telemetry.update();
-//    }
+        _sonarArrayManager = new SonarArrayManager();
+        _sonarArrayManager.addSonar("left", _sonarLeft);
+        _sonarArrayManager.addSonar("right", _sonarRight);
+
+        RobotLog.d("OctobotMain::initialize::end");
+    }
 
     double getCurrentHeading() {
-        Orientation angles = _imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX).toAngleUnit(AngleUnit.DEGREES);
+        Orientation angles = _imu1.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX).toAngleUnit(AngleUnit.DEGREES);
         return angles.firstAngle;
     }
 
@@ -348,7 +282,9 @@ public abstract class OctobotMain extends LinearOpMode
      */
 
     void initializeVuforia() {
-        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(com.qualcomm.ftcrobotcontroller.R.id.cameraMonitorViewId);
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
+
         parameters.vuforiaLicenseKey = "AQMmXDH/////AAAAGXvAv3V7xURDoUrFi6n/qG0LC5kmnnRDMaBE2DbHd3pUuUoMWpX4gA0ZWWxCDoU5Fd189JV3/q1hYeTJGgSschiTneHnBGjCp3KK+ADOnwyxeu8odM4s/CFViozG+D8yyt6sORwv3yWK4g05DOP0dMpUdkUVuADqRUoIYPex/dkJajOXnhteO66gPxZOMCApNuTue1pyYueBeOIGWYC2DY7XQP2DeEL1BssxiXupkFtOsQWE6FWeKvKRwKdTmDQymM+s5SRfhxF/8Yd85keIe0jL/OyzeSIpq8RnHOGz2HjTEQK9UxWD/+A8jy584gdb8X3613zXPURYGKhU657+asjXTb1Yg8smo8CRAUcpEE24";
         parameters.cameraDirection = VuforiaLocalizer.CameraDirection.FRONT;
         parameters.cameraMonitorFeedback = AXES; //set camera feedback icon (An axis is placed on photo in preview)
@@ -356,160 +292,30 @@ public abstract class OctobotMain extends LinearOpMode
 
         _vuforia = ClassFactory.createVuforiaLocalizer(parameters);
 
-        _beacons = _vuforia.loadTrackablesFromAsset("FTC_2016-17"); //load beacon images
-
-        VuforiaTrackable blueNearTarget = _beacons.get(BLUE_NEAR); // Wheels
-        blueNearTarget.setName("Blue Near");
-
-        VuforiaTrackable blueFarTarget = _beacons.get(BLUE_FAR); // Legos
-        blueFarTarget.setName("Blue Far");
-
-        VuforiaTrackable redNearTarget = _beacons.get(RED_NEAR); // Gears
-        redNearTarget.setName("Red Near");
-
-        VuforiaTrackable redFarTarget = _beacons.get(RED_FAR); // Tools
-        redFarTarget.setName("Red Far");
-
-        float mmPerInch = 25.4f;
-        float mmBotWidth = 18 * mmPerInch;            // ... or whatever is right for your robot
-        float mmFTCFieldWidth = (12 * 12 - 2) * mmPerInch;   // the FTC field is ~11'10" center-to-center of the glass panels
-        float mmFTCTileWidth = 24 * mmPerInch;
-        float mmFTCTargetHeight = (1.5f + 8.5f / 2) * mmPerInch;
-        float mmCameraHeight = 9f * mmPerInch;
-
-        // Blue Near location
-
-        OpenGLMatrix blueNearLocationOnField = OpenGLMatrix
-                    /* Then we translate the target off to the RED WALL. Our translation here
-                    is a negative translation in X.*/
-                .translation(mmFTCTileWidth / 2, mmFTCFieldWidth / 2, mmFTCTargetHeight)
-                .multiplied(Orientation.getRotationMatrix(
-                            /* First, in the fixed (field) coordinate system, we rotate 90deg in X, then 90 in Z */
-                        AxesReference.EXTRINSIC, AxesOrder.XZX,
-                        AngleUnit.DEGREES, 90, 0, 0));
-        blueNearTarget.setLocation(blueNearLocationOnField);
-        RobotLog.ii("OctobotMain::initializeVuforia", "Blue Near=%s", VuforiaUtil.formatOpenGLMatrix(blueNearLocationOnField));
-
-        // Blue Far location
-
-        OpenGLMatrix blueFarLocationOnField = OpenGLMatrix
-                    /* Then we translate the target off to the RED WALL. Our translation here
-                    is a negative translation in X.*/
-                .translation(-mmFTCTileWidth * 3 / 2, mmFTCFieldWidth / 2, mmFTCTargetHeight)
-                .multiplied(Orientation.getRotationMatrix(
-                            /* First, in the fixed (field) coordinate system, we rotate 90deg in X, then 90 in Z */
-                        AxesReference.EXTRINSIC, AxesOrder.XZX,
-                        AngleUnit.DEGREES, 90, 0, 0));
-        blueFarTarget.setLocation(blueFarLocationOnField);
-        RobotLog.ii("OctobotMain::initializeVuforia", "Blue Far=%s", VuforiaUtil.formatOpenGLMatrix(blueFarLocationOnField));
-
-        // Red Near location
-
-        OpenGLMatrix redNearLocationOnField = OpenGLMatrix
-                    /* Then we translate the target off to the RED WALL. Our translation here
-                    is a negative translation in X.*/
-                .translation(-mmFTCFieldWidth / 2, -mmFTCTileWidth / 2, mmFTCTargetHeight)
-                .multiplied(Orientation.getRotationMatrix(
-                            /* First, in the fixed (field) coordinate system, we rotate 90deg in X, then 90 in Z */
-                        AxesReference.EXTRINSIC, AxesOrder.XZX,
-                        AngleUnit.DEGREES, 90, 90, 0));
-        redNearTarget.setLocation(redNearLocationOnField);
-        RobotLog.ii("OctobotMain::initializeVuforia", "Red Near=%s", VuforiaUtil.formatOpenGLMatrix(redNearLocationOnField));
-
-        // Red Far location
-
-        OpenGLMatrix redFarLocationOnField = OpenGLMatrix
-                    /* Then we translate the target off to the RED WALL. Our translation here
-                    is a negative translation in X.*/
-                .translation(-mmFTCFieldWidth / 2, mmFTCTileWidth * 3 / 2, mmFTCTargetHeight)
-                .multiplied(Orientation.getRotationMatrix(
-                            /* First, in the fixed (field) coordinate system, we rotate 90deg in X, then 90 in Z */
-                        AxesReference.EXTRINSIC, AxesOrder.XZX,
-                        AngleUnit.DEGREES, 90, 90, 0));
-        redFarTarget.setLocation(redFarLocationOnField);
-        RobotLog.ii("OctobotMain::initializeVuforia", "Red Far=%s", VuforiaUtil.formatOpenGLMatrix(redFarLocationOnField));
-
-        /**
-         * Create a transformation matrix describing where the phone is on the robot. Here, we
-         * put the phone on the right hand side of the robot with the screen facing in (see our
-         * choice of BACK camera above) and in landscape mode. Starting from alignment between the
-         * robot's and phone's axes, this is a rotation of -90deg along the Y axis.
-         *
-         * When determining whether a rotation is positive or negative, consider yourself as looking
-         * down the (positive) axis of rotation from the positive towards the origin. Positive rotations
-         * are then CCW, and negative rotations CW. An example: consider looking down the positive Z
-         * axis towards the origin. A positive rotation about Z (ie: a rotation parallel to the the X-Y
-         * plane) is then CCW, as one would normally expect from the usual classic 2D geometry.
-         */
-
-            /* .translation(0,0,mmBotWidth / 2)  80 1200 278 */
-            /* .translation(0,0,-mmBotWidth / 2) 538 1200 274 */
-            /* .translation(0,mmBotWidth / 2,0)  310 1220 502 */
-            /* .translation(0,-mmBotWidth / 2,0)  310 1182 48 */
-            /* .translation(mmBotWidth / 2,0,0)  310 1430 255 */
-            /* .translation(-mmBotWidth / 2,0,0)  309 974 296 */
-
-        /*
-            -90, -90, 0 appeared to work for absolution position, but -90,90,0 works better for position relative to beacon
-         */
-
-        OpenGLMatrix phoneLocationOnRobot = OpenGLMatrix
-                .translation(-mmBotWidth / 2, -mmCameraHeight, 0)
-                .multiplied(Orientation.getRotationMatrix(
-                        AxesReference.EXTRINSIC, AxesOrder.ZYX,
-                        AngleUnit.DEGREES, -90, 90, 0));
-        RobotLog.ii("OctobotMain::initializeVuforia", "Phone = %s", VuforiaUtil.formatOpenGLMatrix(phoneLocationOnRobot));
-
-        /**
-         * Let the trackable listeners we care about know where the phone is. We know that each
-         * listener is a {@link VuforiaTrackableDefaultListener} and can so safely cast because
-         * we have not ourselves installed a listener of a different type.
-         */
-
-        for (VuforiaTrackable trackable : _beacons) {
-            ((VuforiaTrackableDefaultListener) trackable.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
-        }
+        _vuforiaTrackables = _vuforia.loadTrackablesFromAsset("RelicVuMark");
     }
 
     void startVuforia() {
-        _beacons.activate();
+        _vuforiaTrackables.activate();
     }
 
     void stopVuforia() {
-        _beacons.deactivate();
+        _vuforiaTrackables.deactivate();
     }
 
-    OpenGLMatrix getVuforiaLocation() {
-        OpenGLMatrix lastLocation = null;
+    RelicRecoveryVuMark getDisplayedVuMark() {
+        VuforiaTrackable vuforiaTemplate = _vuforiaTrackables.get(0);
 
-        for (VuforiaTrackable trackable : _beacons) {
-            OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener) trackable.getListener()).getUpdatedRobotLocation();
-
-            if (robotLocationTransform != null) {
-                lastLocation = robotLocationTransform;
-            }
-        }
-
-        return lastLocation;
+        return RelicRecoveryVuMark.from(vuforiaTemplate);
     }
 
-    VuforiaTrackableDefaultListener getBeaconListener(int beaconIndex) {
-        return (VuforiaTrackableDefaultListener) _beacons.get(beaconIndex).getListener();
+    OpenGLMatrix getVuMarkPose() {
+        VuforiaTrackable vuforiaTemplate = _vuforiaTrackables.get(0);
+        OpenGLMatrix pose = ((VuforiaTrackableDefaultListener) vuforiaTemplate.getListener()).getPose();
+
+        return pose;
     }
 
-    boolean isBeaconVisible(VuforiaTrackableDefaultListener listener) throws InterruptedException {
-        boolean isVisible = false;
-
-        int count = 0;
-
-        while(!isVisible && count < 100) {
-            isVisible =  (listener.getRawPose() != null);
-            ++count;
-            Thread.sleep(10);
-        }
-
-        return isVisible;
-    }
 
     public void resetAllDriveMotorEncoders() throws InterruptedException {
         RobotControl.resetMotorEncoder(_motorA, this);
@@ -532,11 +338,25 @@ public abstract class OctobotMain extends LinearOpMode
         _motorD.setPower(0);
     }
 
+    public void resetNonDriveMotorEncoders() throws InterruptedException {
+        RobotControl.resetMotorEncoder(_motorLift, this);
+    }
+
+    public void runNonDriveUsingEncoders() throws InterruptedException {
+        _motorLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+
+
     public void drive(DriverIF driver) throws InterruptedException {
+        RobotLog.d("OctobotMain::drive()::A");
         driver.start();
+
+        RobotLog.d("OctobotMain::drive()::B");
 
         resetAllDriveMotorEncoders();
         runUsingEncoders();
+
+        RobotLog.d("OctobotMain::drive()::C");
 
         boolean keepGoing = true;
 
@@ -545,10 +365,19 @@ public abstract class OctobotMain extends LinearOpMode
         long startTime = System.currentTimeMillis();
         int numSteeringUpdates = 0;
 
+        RobotLog.d("OctobotMain::drive()::D");
+
+        _sonarRight.startAutoPing(100);
+        _sonarLeft.startAutoPing(100);
+
         while (keepGoing) {
+            RobotLog.d("OctobotMain::drive()::E");
+
             DriverIF.Steerage steerage = driver.getSteerage();
 
             if(lastSteerage == null || !steerage.equals(lastSteerage)) {
+                RobotLog.d("OctobotMain::drive()::F");
+
                 ++numSteeringUpdates;
 
                 double frontLeft = steerage.getLeft() - steerage.getStrafe();
@@ -565,15 +394,17 @@ public abstract class OctobotMain extends LinearOpMode
                     rearRight /= maxPower;
                 }
 
+                RobotLog.d("OctobotMain::drive()::");
+
                 _motorA.setPower(frontRight);
                 _motorB.setPower(rearRight);
                 _motorC.setPower(frontLeft);
                 _motorD.setPower(rearLeft);
 
-                RobotLog.d("OctobotMain::drive::frontRight: " + frontRight);
-                RobotLog.d("OctobotMain::drive::rearRight: " + rearRight);
-                RobotLog.d("OctobotMain::drive::frontLeft: " + frontLeft);
-                RobotLog.d("OctobotMain::drive::rearLeft: " + rearLeft);
+                RobotLog.d("OctobotMain::drive()::frontRight: " + frontRight);
+                RobotLog.d("OctobotMain::drive()::rearRight: " + rearRight);
+                RobotLog.d("OctobotMain::drive()::frontLeft: " + frontLeft);
+                RobotLog.d("OctobotMain::drive()::rearLeft: " + rearLeft);
             }
 
             int positionA = _motorA.getCurrentPosition();
@@ -583,25 +414,43 @@ public abstract class OctobotMain extends LinearOpMode
 
             int position = (Math.abs(positionA) + Math.abs(positionB) + Math.abs(positionC) + Math.abs(positionD)) / 4;
 
+            RobotLog.d("OctobotMain::drive()::G");
+
             keepGoing = driver.keepGoing(position);
+
+            RobotLog.d("OctobotMain::drive()::keepGoing: " + keepGoing);
 
             Thread.sleep(5);
 
+            RobotLog.d("OctobotMain::drive::H");
+
             idle();
         }
+
+        _sonarRight.stopAutoPing();
+        _sonarLeft.stopAutoPing();
 
         RobotLog.d("OctobotMain::drive::steering update interval: " + (System.currentTimeMillis() - startTime) / numSteeringUpdates);
 
         stopMotors();
 
+        RobotLog.d("OctobotMain::drive()::I");
+
         driver.finish();
+
+        RobotLog.d("OctobotMain::drive()::J");
+
     }
 
     public void turn(TurnerIF turner) throws InterruptedException {
+
+        RobotLog.d("OctobotMain::turn()::D");
+
         turner.start();
 
-        resetAllDriveMotorEncoders();
         runUsingEncoders();
+
+        RobotLog.d("OctobotMain::turn()::E");
 
         boolean keepGoing = true;
 
@@ -609,18 +458,29 @@ public abstract class OctobotMain extends LinearOpMode
         double lastPower = 0;
 
         while(keepGoing) {
-            idle();
+            RobotLog.d("OctobotMain::turn()::F");
+
+//            waitForNextHardwareCycle();
+
+            RobotLog.d("OctobotMain::turn()::G");
 
             double power = turner.getPower();
+
+            RobotLog.d("OctobotMain::turn()::H");
+
             double scaleFactor = turner.getScaleFactor();
 
+            RobotLog.d("OctobotMain::turn()::power: " + power);
+            RobotLog.d("OctobotMain::turn()::scaleFactor: " + scaleFactor);
+
             if(power != lastPower || scaleFactor != lastScaleFactor) {
-                RobotLog.d("OctobotMain::turn::power: " + power);
-                RobotLog.d("OctobotMain::turn::scaleFactor: " + scaleFactor);
+                RobotLog.d("OctobotMain::turn()::I");
 
                 if (Double.isNaN(scaleFactor)) {
                     keepGoing = false;
                 } else {
+                    RobotLog.d("OctobotMain::turn()::J");
+
                     _motorA.setPower(-power * scaleFactor);
                     _motorB.setPower(-power * scaleFactor);
                     _motorC.setPower(power * scaleFactor);
@@ -630,9 +490,290 @@ public abstract class OctobotMain extends LinearOpMode
                 lastPower = power;
                 lastScaleFactor = scaleFactor;
             }
+
+            RobotLog.d("OctobotMain::turn()::K");
+
+            Thread.sleep(5);
+
+//            idle();
+//            try {
+//                Thread.yield();
+//            }
+//            catch(Throwable t) {
+//            }
         }
 
+        RobotLog.d("OctobotMain::turn()::L");
+
         stopMotors();
+
+        RobotLog.d("OctobotMain::turn()::M");
     }
+    public void balance(){
+        float leftX = gamepad1.left_stick_x;
+        float leftY;
+
+        float rightX = gamepad1.right_stick_x;
+        float rightY;
+
+        float multiplier;
+
+        angles   = _imu1.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        pitchAngle = 0;
+
+        if ((angles.thirdAngle) > 0){
+            pitchAngle = 180-angles.thirdAngle;
+        }
+        else if(angles.thirdAngle < 0){
+            pitchAngle = angles.thirdAngle + 180;
+            pitchAngle = -pitchAngle;
+        }
+        telemetry.addData("pitch",pitchAngle);
+
+        rollAngle = -angles.secondAngle;
+
+        multiplier = .01f;
+
+        telemetry.addData("roll", angles.secondAngle);
+
+        leftY = multiplier * pitchAngle;
+        rightY = multiplier * pitchAngle;
+
+        leftX = multiplier * rollAngle;
+        rightX = multiplier * rollAngle;
+
+
+        float Yf = (leftY + rightY) / 2f;
+        float Yt = (leftY - rightY) / 2f;
+        float strafeX = -(leftX + rightX) / 2f;
+
+        float Kf = 1f;
+        float Kt = 1f;
+        float Ks = 1f;
+
+        float frontLeft = Kf * Yf + Kt * Yt + Ks * strafeX;
+        float frontRight = Kf * Yf - Kt * Yt - Ks * strafeX;
+        float rearLeft = Kf * Yf + Kt * Yt - Ks * strafeX;
+        float rearRight = Kf * Yf - Kt * Yt + Ks * strafeX;
+
+        float maxPower = Math.max(Math.max(Math.abs(frontLeft), Math.abs(frontRight)), Math.max(Math.abs(rearLeft), Math.abs(rearRight)));
+
+        if (maxPower > 1) {
+            frontLeft /= maxPower;
+            frontRight /= maxPower;
+            rearLeft /= maxPower;
+            rearRight /= maxPower;
+        }
+
+        float motorAPower = RobotControl.convertStickToPower(frontRight);
+        float motorBPower = RobotControl.convertStickToPower(rearRight);
+        float motorCPower = RobotControl.convertStickToPower(frontLeft);
+        float motorDPower = RobotControl.convertStickToPower(rearLeft);
+
+        RobotLog.d("Motor Power " + motorAPower + " " + motorBPower + " " + motorCPower + " " + motorDPower);
+        telemetry.addData("Motor Power", motorAPower + " " + motorBPower + " " + motorCPower + " " + motorDPower);
+
+        _motorA.setPower(motorAPower);
+        _motorB.setPower(motorBPower);
+        _motorC.setPower(motorCPower);
+        _motorD.setPower(motorDPower);
+    }
+
+    public Servo getGrabberServo(){
+        float[] hsvValuesGrabber = new float[3];
+
+        NormalizedRGBA colorsGrabber = _sensorRGB.getNormalizedColors();
+
+        Color.colorToHSV(colorsGrabber.toColor(), hsvValuesGrabber);
+
+        float hueGrabber = hsvValuesGrabber[0];
+        float saturationGrabber = hsvValuesGrabber[1];
+
+        boolean isBlue = true;
+
+        if (hueGrabber >= 0 && hueGrabber <= 90) {
+            isBlue = false;
+        } else if (hueGrabber <= 260 && hueGrabber >= 120) {
+            isBlue = true;
+        }
+
+        if(!isBlue){
+            return _servoBottom;
+        }
+        else{
+            return _servoTop;
+        }
+    }
+    public RelicRecoveryVuMark getVuforia(){
+        RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.UNKNOWN;
+
+        while(vuMark == RelicRecoveryVuMark.UNKNOWN){
+            vuMark = getDisplayedVuMark();
+            sleep(5);
+        }
+        return vuMark;
+    }
+
+    public NormalizedRGBA getColorsRobust(NormalizedColorSensor colorSensor) {
+        NormalizedRGBA colors = colorSensor.getNormalizedColors();
+
+        float[] hsvValuesArm = new float[3];
+
+        int counter = 0;
+
+        while(counter < 10 && hsvValuesArm[1] < .5) {
+            colors = colorSensor.getNormalizedColors();
+            Color.colorToHSV(colors.toColor(), hsvValuesArm);
+            sleep(10);
+            ++counter;
+        }
+
+        return colors;
+    }
+
+    public void jewel(double initialHeading, boolean side) throws InterruptedException {
+        _servoArm.setPosition(1);
+
+        sleep(1250);
+
+        float[] hsvValuesArm = new float[3];
+
+        NormalizedRGBA colorsArm = getColorsRobust(_sensorRGBArm);
+
+        Color.colorToHSV(colorsArm.toColor(), hsvValuesArm);
+
+        float hueArm = hsvValuesArm[0];
+        float saturationArm = hsvValuesArm[1];
+
+        RobotLog.d("OctobotMain::jewel()::hueArm: " + hueArm);
+        RobotLog.d("OctobotMain::jewel()::saturationArm: " + saturationArm);
+
+        if(saturationArm < .5) {
+            RobotLog.d("OctobotMain::jewel()::turn closer");
+            turn(new IMUTurner(2, .1, _imu1, .2, .25));
+            colorsArm = getColorsRobust(_sensorRGBArm);
+            Color.colorToHSV(colorsArm.toColor(), hsvValuesArm);
+            hueArm = hsvValuesArm[0];
+            saturationArm = hsvValuesArm[1];
+            RobotLog.d("OctobotMain::jewel()::hueArm: " + hueArm);
+            RobotLog.d("OctobotMain::jewel()::saturationArm: " + saturationArm);
+        }
+
+        colorsArm = getColorsRobust(_sensorRGBArm);
+        Color.colorToHSV(colorsArm.toColor(), hsvValuesArm);
+        hueArm = hsvValuesArm[0];
+        saturationArm = hsvValuesArm[1];
+
+        if(saturationArm < .5){
+            turn(new IMUTurner(-(getCurrentHeading() - initialHeading), .1, _imu1, .2, .25));
+
+            _servoArm.setPosition(0);
+        }
+        else {
+            boolean isRed = true;
+
+
+            if (hueArm <= 260 && hueArm >= 120) {
+                RobotLog.d("OctobotMain::jewel()::isRed = false");
+                isRed = false;
+            }
+
+            RobotLog.d("OctobotMain::jewel()::isRed: " + isRed);
+
+            if (isRed) {
+                turn(new IMUTurner(15 * (side ? 1 : -1), .7, _imu1, .2, 2));
+                turn(new IMUTurner(-15 * (side ? 1 : -1), .3, _imu1, .2, 2));
+            } else if (!isRed) {
+                turn(new IMUTurner(-15 * (side ? 1 : -1), .7, _imu1, .2, 2));
+                turn(new IMUTurner(15 * (side ? 1 : -1), .3, _imu1, .2, 2));
+            }
+
+            turn(new IMUTurner(-(getCurrentHeading() - initialHeading), .1, _imu1, .2, .25));
+
+            _servoArm.setPosition(0);
+        }
+    }
+
+    public void deliverBlockCorner(double initialHeading, Servo _servo, boolean side) throws InterruptedException {
+         SharpDistanceSensor irSensor = (side ? _irSensorRight : _irSensorLeft);
+
+        Thread.sleep(100);
+
+        drive(new IMUDriver(.35, 0, _imu1, .04, initialHeading - 90, RobotControl.convertInches(side ? 2 : 5), null));
+
+        double minDistance = irSensor.getDistance() - 8;
+
+        RobotLog.d("OctobotAutonomousBlueCorner::minDistance:: " + minDistance);
+
+        drive(new DistanceStopper((side ? _irSensorRight : _irSensorLeft), minDistance, Double.MAX_VALUE,
+                new IMUDriver(0, side ? .25 : -.25, _imu1, .04, initialHeading - 90, RobotControl.convertInchesStrafe(8), null)));
+
+        drive(new IMUDriver(0, side ? -.25 : .25, _imu1, .04, initialHeading - 90, RobotControl.convertInchesStrafe(2.5f), null));
+
+        while(!_button1.getState()){
+            _motorSlide.setPower(-1);
+            Thread.sleep(5);
+            idle();
+        }
+
+        _motorSlide.setPower(0);
+
+        _servo.setPosition(0);
+    }
+
+    public void deliverBlockSide(double initialHeading, Servo _servo, boolean side) throws InterruptedException {
+        drive(new IMUDriver(.35, 0, _imu1, .04, initialHeading, RobotControl.convertInches(2), null));
+
+        DistanceSensorIF distanceSensor = (side ? _irSensorRight : _irSensorLeft);
+
+        double minDistance = 20;
+
+        RobotLog.d("OctobotAutonomousBlueCorner::minDistance:: " + minDistance);
+
+        drive(new PillarStopper(distanceSensor, minDistance, Double.MAX_VALUE,
+                new IMUDriver(0, side ? .25 : -.25, _imu1, .04, initialHeading, RobotControl.convertInchesStrafe(8), null)));
+
+        drive(new IMUDriver(0, side ? -.25 : .25, _imu1, .04, initialHeading, RobotControl.convertInchesStrafe(1.5f), null));
+
+        while(!_button1.getState()){
+            _motorSlide.setPower(-1);
+            Thread.sleep(5);
+            idle();
+        }
+
+        _motorSlide.setPower(0);
+
+        _servo.setPosition(0);
+    }
+
+    public void afterBlockCorner(double initialHeading, boolean side) throws InterruptedException {
+        drive(new IMUDriver(-.35, 0, _imu1, .04, initialHeading - 90, RobotControl.convertInches(9), null));
+
+        turn(new IMUTurner(-90, .6, _imu1, .2, 2));
+        turn(new IMUTurner(-90, .6, _imu1, .2, 2));
+
+        drive(new IMUDriver(-.35, 0, _imu1, .04, initialHeading + 90, RobotControl.convertInches(13), null));
+    }
+
+    public void afterBlockSide(double initialHeading, boolean side) throws InterruptedException {
+        drive(new IMUDriver(-.35, 0, _imu1, .04, initialHeading, RobotControl.convertInches(9), null));
+
+        turn(new IMUTurner(-90, .6, _imu1, .2, 2));
+        turn(new IMUTurner(-90, .6, _imu1, .2, 2));
+    }
+
+    public void raiseLift1500() throws InterruptedException {
+        _motorLift.setPower(1);
+
+//        while(_motorLift.getCurrentPosition() < 1500) {
+//            Thread.sleep(5);
+//            idle();
+//        }
+        Thread.sleep(1000)   ;
+
+        _motorLift.setPower(0);
+    }
+
+
 }
 

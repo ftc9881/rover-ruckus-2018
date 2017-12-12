@@ -24,7 +24,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefau
  * and a for loop.
  */
 @TeleOp(name = "TestDriver", group = "test")
-@Disabled
 public class TestDriver extends OctobotMain
 {
     @Override
@@ -34,42 +33,30 @@ public class TestDriver extends OctobotMain
 
         initialize();
 
-        telemetry.addLine("Initializing Vuforia");
-        telemetry.update();
-
-        initializeVuforia();
-
-        telemetry.addLine("Calibrating");
-        telemetry.update();
-
-//        calibrateSensors();
-
-        telemetry.addLine("Ready");
-        telemetry.update();
-
-//        calibrateSensors();
-
         waitForStart();
 
-        startVuforia();
+        double initialHeading = getCurrentHeading();
 
-//        GyroDriver gyroDriver = new GyroDriver(.5, _gyro, .05, RobotControl.convertInches(72), null);
-       // LightDriver lightDriver = new LightDriver(.25, _analog0, _led0, _calibrationData._analog0Min , _calibrationData._analog0Max , .5, RobotControl.convertInches(72), null);
-        IMUDriver imuDriver = new IMUDriver(.85,0,  _imu, .05, Double.NaN, RobotControl.convertInches(72), null);
+        RobotLog.d("TestDriver::initialHeading::" + initialHeading);
 
-        VuforiaTrackableDefaultListener blueNearListener = getBeaconListener(BLUE_NEAR);
+        drive(new IMUDriver(0, .85, _imu1, .04, initialHeading, RobotControl.convertInchesStrafe(16), null));
 
-        VuforiaBeaconDriver vuforiaBeaconDriver = new VuforiaBeaconDriver(blueNearListener, .5, .05, .1, 5, 300, 20, Integer.MAX_VALUE, null);
+        RobotLog.d("TestDriver::A");
 
-        drive(vuforiaBeaconDriver);
+        drive(new IMUDriver(0, -.85, _imu1, .04, initialHeading, RobotControl.convertInchesStrafe(16), null));
 
-        stopVuforia();
+        RobotLog.d("TestDriver::B");
 
-//        IMUTurner imuTurnerCW = new IMUTurner(-90, 1, _imu, .1, .1);
-//        turn(imuTurnerCW);
+        Thread.sleep(1000);
 
-//        IMUTurner imuTurnerCCW = new IMUTurner(-90, .25, _imu, 1);
-//        turn(imuTurnerCCW);
+        turn(new IMUTurner(-90, 1, _imu1, .2, 2));
+
+        RobotLog.d("TestDriver::C");
+
+        turn(new IMUTurner(90, 1, _imu1, .2, 2));
+
+        RobotLog.d("TestDriver::D");
+
     }
 
 }
