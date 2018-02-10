@@ -7,14 +7,14 @@ import com.qualcomm.robotcore.util.RobotLog;
 /**
  * Created by ftc on 2/19/2017.
  */
-public class LightStopper extends DefaultDriver {
+public class LightStopper extends DefaultStopper {
     private final AnalogInput _analogInput;
     private final double _target;
     private final DigitalChannel _led;
     private double _voltageEWMA;
 
-    public LightStopper(AnalogInput analogInput, DigitalChannel led, double target, DriverIF driver) {
-        super(driver);
+    public LightStopper(AnalogInput analogInput, DigitalChannel led, double target, StopperIF stopper) {
+        super(stopper);
 
         _analogInput = analogInput;
         _led = led;
@@ -31,18 +31,6 @@ public class LightStopper extends DefaultDriver {
         }
 
         _voltageEWMA = Double.NaN;
-    }
-
-    @Override
-    public Steerage getSteerage() {
-        Steerage steerage = super.getSteerage();
-
-        if(steerage == null) {
-            return Steerage.createStationary();
-        }
-        else {
-            return steerage;
-        }
     }
 
     @Override

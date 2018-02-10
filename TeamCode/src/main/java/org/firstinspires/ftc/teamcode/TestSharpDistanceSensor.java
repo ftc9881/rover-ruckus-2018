@@ -1,10 +1,12 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.util.RobotLog;
 
 @TeleOp(name = "TestSharpDistanceSensor", group = "Test")
+@Disabled
 public class TestSharpDistanceSensor extends OctobotMain {
 //    //lookup table to find distance compared to voltage based on our measurements. We may need to
 //    // recalculate these using a more exact measurement tool, but they are within 1 cm.

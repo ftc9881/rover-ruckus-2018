@@ -54,7 +54,7 @@ public class RobotControl {
         return (int)(4400 * inches / 36.0);
     }
 
-    public static float convertStickToPower(float stickValue) {
+    public static double convertStickToPower(double stickValue) {
         return (stickValue > 0 ? 1 : -1) * (float)Math.pow(Math.abs(stickValue), 1.5);
 //        return (stickValue > 0 ? 1 : -1) * ((float)Math.pow(Math.abs(stickValue), 10) + (float)(0.4 * Math.abs((stickValue))))/(float)(1.4);
     }

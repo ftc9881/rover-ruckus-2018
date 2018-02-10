@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.util.RobotLog;
  * Created by ftc on 2/2/2017.
  */
 
-public interface DriverIF {
+public interface DriverIF extends StopperIF {
     class Steerage {
         double _left;
         double _right;
@@ -72,19 +72,9 @@ public interface DriverIF {
         }
     }
 
-    void start();
-
     /**
      * Return the power that should be used for the motors
      * @return
      */
     Steerage getSteerage();
-
-    /**
-     * Returns true if we should stop
-     * @return
-     */
-    boolean keepGoing(int position);
-
-    void finish();
 }

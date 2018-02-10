@@ -17,7 +17,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import java.util.Locale;
 
 @TeleOp(name="Balance", group= "octobot")
-
+@Disabled
 
 public class Balance extends OctobotMain {
 
@@ -49,18 +49,18 @@ public class Balance extends OctobotMain {
 
             float multiplier;
 
-            angles   = _imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+            angles   = _imu1.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             pitchAngle = 0;
 
 
-            telemetry.addData("IMU angle", _imu.getAngularOrientation());
+//            telemetry.addData("IMU angle", _imu.getAngularOrientation());
             telemetry.addData("IMU1 angle", _imu1.getAngularOrientation());
-            telemetry.addData("IMU2 angle", _imu2.getAngularOrientation());
-            telemetry.addData("IMU orientation", _imu.getQuaternionOrientation());
+//            telemetry.addData("IMU2 angle", _imu2.getAngularOrientation());
+//            telemetry.addData("IMU orientation", _imu.getQuaternionOrientation());
             telemetry.addData("IMU1 orientation", _imu1.getQuaternionOrientation());
-            telemetry.addData("IMU2 orientation", _imu2.getQuaternionOrientation());
+//            telemetry.addData("IMU2 orientation", _imu2.getQuaternionOrientation());
 
-            telemetry.addData("cal",_imu.getCalibrationStatus());
+//            telemetry.addData("cal",_imu.getCalibrationStatus());
 
             telemetry.addData("pitch", angles.thirdAngle);
 
@@ -108,10 +108,10 @@ public class Balance extends OctobotMain {
                 rearRight /= maxPower;
             }
 
-            float motorAPower = RobotControl.convertStickToPower(frontRight);
-            float motorBPower = RobotControl.convertStickToPower(rearRight);
-            float motorCPower = RobotControl.convertStickToPower(frontLeft);
-            float motorDPower = RobotControl.convertStickToPower(rearLeft);
+            double motorAPower = RobotControl.convertStickToPower(frontRight);
+            double motorBPower = RobotControl.convertStickToPower(rearRight);
+            double motorCPower = RobotControl.convertStickToPower(frontLeft);
+            double motorDPower = RobotControl.convertStickToPower(rearLeft);
 
             RobotLog.d("Motor Power " + motorAPower + " " + motorBPower + " " + motorCPower + " " + motorDPower);
             telemetry.addData("Motor Power", motorAPower + " " + motorBPower + " " + motorCPower + " " + motorDPower);
@@ -120,10 +120,6 @@ public class Balance extends OctobotMain {
             _motorB.setPower(motorBPower);
             _motorC.setPower(motorCPower);
             _motorD.setPower(motorDPower);
-
-
-
-
 
             telemetry.update();
 

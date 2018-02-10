@@ -3,47 +3,26 @@ package org.firstinspires.ftc.teamcode;
 import android.graphics.Color;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.AnalogInput;
-import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.DeviceInterfaceModule;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
-import com.qualcomm.robotcore.hardware.DigitalChannelController;
-import com.qualcomm.robotcore.hardware.I2cAddr;
-import com.qualcomm.robotcore.hardware.I2cDevice;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ReadWriteFile;
 import com.qualcomm.robotcore.util.RobotLog;
-import com.qualcomm.robotcore.util.TypeConversion;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
-import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
-import org.firstinspires.ftc.robotcore.external.navigation.VuMarkInstanceId;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
-import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 
-
-
-import java.io.File;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.util.Arrays;
 
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.Parameters.CameraMonitorFeedback.AXES;
 
@@ -70,17 +49,17 @@ public abstract class OctobotMain extends LinearOpMode
     public DigitalChannel _button2 = null;
     public DigitalChannel _button3 = null;
 
-    BNO055IMU _imu;
+//    BNO055IMU _imu;
     BNO055IMU _imu1;
-    BNO055IMU _imu2;
+//    BNO055IMU _imu2;
 
 
     //DeviceInterfaceModule _cdim;
     NormalizedColorSensor _sensorRGB;
     NormalizedColorSensor _sensorRGBArm;
 
-    public Servo _servoTop = null;
-    public Servo _servoBottom = null;
+    public Servo _servoGrabberRed = null;
+    public Servo _servoGrabberBlue = null;
     public Servo _servoArm = null;
     public Servo _servoRelic = null;
     public Servo _servoLock = null;
@@ -112,9 +91,9 @@ public abstract class OctobotMain extends LinearOpMode
         Sonar sensors
      */
 
-    public MaxSonarI2CXL _sonarLeft;
-    public MaxSonarI2CXL _sonarRight;
-    public SonarArrayManager _sonarArrayManager;
+//    public MaxSonarI2CXL _sonarLeft;
+//    public MaxSonarI2CXL _sonarRight;
+//    public SonarArrayManager _sonarArrayManager;
 
     /**
      * Initialize all sensors, motors, etc.
@@ -190,8 +169,8 @@ public abstract class OctobotMain extends LinearOpMode
 
         RobotLog.d("OctobotMain::initialize::initialize servos");
 
-        _servoTop = hardwareMap.servo.get("servo_top");
-        _servoBottom = hardwareMap.servo.get("servo_bottom");
+        _servoGrabberRed = hardwareMap.servo.get("servo_top");
+        _servoGrabberBlue = hardwareMap.servo.get("servo_bottom");
         _servoArm = hardwareMap.servo.get("servo_arm");
         _servoRelic = hardwareMap.servo.get("servo_relic");
         _servoLock = hardwareMap.servo.get("servo_lock");
@@ -259,15 +238,15 @@ public abstract class OctobotMain extends LinearOpMode
             Sonar Sensors
          */
 
-        _sonarLeft = hardwareMap.get(MaxSonarI2CXL.class, "sonar_left");
-        _sonarRight = hardwareMap.get(MaxSonarI2CXL.class, "sonar_right");
-
-        _sonarLeft.setI2cAddress(I2cAddr.create8bit(0xE0));
-        _sonarRight.setI2cAddress(I2cAddr.create8bit(0xDE));
-
-        _sonarArrayManager = new SonarArrayManager();
-        _sonarArrayManager.addSonar("left", _sonarLeft);
-        _sonarArrayManager.addSonar("right", _sonarRight);
+//        _sonarLeft = hardwareMap.get(MaxSonarI2CXL.class, "sonar_left");
+//        _sonarRight = hardwareMap.get(MaxSonarI2CXL.class, "sonar_right");
+//
+//        _sonarLeft.setI2cAddress(I2cAddr.create8bit(0xE0));
+//        _sonarRight.setI2cAddress(I2cAddr.create8bit(0xDE));
+//
+//        _sonarArrayManager = new SonarArrayManager();
+//        _sonarArrayManager.addSonar("left", _sonarLeft);
+//        _sonarArrayManager.addSonar("right", _sonarRight);
 
         RobotLog.d("OctobotMain::initialize::end");
     }
@@ -331,6 +310,13 @@ public abstract class OctobotMain extends LinearOpMode
         _motorD.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
+    public void runWithoutEncoders() throws InterruptedException {
+        _motorA.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        _motorB.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        _motorC.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        _motorD.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
+
     public void stopMotors() {
         _motorA.setPower(0);
         _motorB.setPower(0);
@@ -346,17 +332,26 @@ public abstract class OctobotMain extends LinearOpMode
         _motorLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
+    public void runNonDriveWithoutEncoders() throws InterruptedException {
+        _motorLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
 
-    public void drive(DriverIF driver) throws InterruptedException {
-        RobotLog.d("OctobotMain::drive()::A");
+    public void drive(DriverIF driver, boolean runUsingEncoders, boolean stopMotors) throws InterruptedException {
+//        RobotLog.d("OctobotMain::drive()::A");
         driver.start();
 
-        RobotLog.d("OctobotMain::drive()::B");
+//        RobotLog.d("OctobotMain::drive()::B");
 
         resetAllDriveMotorEncoders();
-        runUsingEncoders();
 
-        RobotLog.d("OctobotMain::drive()::C");
+        if(runUsingEncoders) {
+            runUsingEncoders();
+        }
+        else {
+            runWithoutEncoders();
+        }
+
+//        RobotLog.d("OctobotMain::drive()::C");
 
         boolean keepGoing = true;
 
@@ -365,19 +360,32 @@ public abstract class OctobotMain extends LinearOpMode
         long startTime = System.currentTimeMillis();
         int numSteeringUpdates = 0;
 
-        RobotLog.d("OctobotMain::drive()::D");
+//        RobotLog.d("OctobotMain::drive()::D");
 
-        _sonarRight.startAutoPing(100);
-        _sonarLeft.startAutoPing(100);
+        int lastPositionA = _motorA.getCurrentPosition();
+        int lastPositionB = _motorB.getCurrentPosition();
+        int lastPositionC = _motorC.getCurrentPosition();
+        int lastPositionD = _motorD.getCurrentPosition();
+
+//        RobotLog.d("OctobotMain::drive()::initial positionA: " + lastPositionA);
+//        RobotLog.d("OctobotMain::drive()::initial positionB: " + lastPositionB);
+//        RobotLog.d("OctobotMain::drive()::initial positionC: " + lastPositionC);
+//        RobotLog.d("OctobotMain::drive()::initial positionD: " + lastPositionD);
+
+        int keepPositionA = 1;
+        int keepPositionB = 1;
+        int keepPositionC = 1;
+        int keepPositionD = 1;
+
+        double lastPowerA = 0;
+        double lastPowerB = 0;
+        double lastPowerC = 0;
+        double lastPowerD = 0;
 
         while (keepGoing) {
-            RobotLog.d("OctobotMain::drive()::E");
-
             DriverIF.Steerage steerage = driver.getSteerage();
 
             if(lastSteerage == null || !steerage.equals(lastSteerage)) {
-                RobotLog.d("OctobotMain::drive()::F");
-
                 ++numSteeringUpdates;
 
                 double frontLeft = steerage.getLeft() - steerage.getStrafe();
@@ -394,17 +402,15 @@ public abstract class OctobotMain extends LinearOpMode
                     rearRight /= maxPower;
                 }
 
-                RobotLog.d("OctobotMain::drive()::");
-
                 _motorA.setPower(frontRight);
                 _motorB.setPower(rearRight);
                 _motorC.setPower(frontLeft);
                 _motorD.setPower(rearLeft);
 
-                RobotLog.d("OctobotMain::drive()::frontRight: " + frontRight);
-                RobotLog.d("OctobotMain::drive()::rearRight: " + rearRight);
-                RobotLog.d("OctobotMain::drive()::frontLeft: " + frontLeft);
-                RobotLog.d("OctobotMain::drive()::rearLeft: " + rearLeft);
+//                RobotLog.d("OctobotMain::drive()::frontRight: " + frontRight);
+//                RobotLog.d("OctobotMain::drive()::rearRight: " + rearRight);
+//                RobotLog.d("OctobotMain::drive()::frontLeft: " + frontLeft);
+//                RobotLog.d("OctobotMain::drive()::rearLeft: " + rearLeft);
             }
 
             int positionA = _motorA.getCurrentPosition();
@@ -412,27 +418,80 @@ public abstract class OctobotMain extends LinearOpMode
             int positionC = _motorC.getCurrentPosition();
             int positionD = _motorD.getCurrentPosition();
 
-            int position = (Math.abs(positionA) + Math.abs(positionB) + Math.abs(positionC) + Math.abs(positionD)) / 4;
+//            RobotLog.d("OctobotMain::drive()::positionA: " + positionA);
+//            RobotLog.d("OctobotMain::drive()::positionB: " + positionB);
+//            RobotLog.d("OctobotMain::drive()::positionC: " + positionC);
+//            RobotLog.d("OctobotMain::drive()::positionD: " + positionD);
 
-            RobotLog.d("OctobotMain::drive()::G");
+            /*
+                If the change in encoder position is opposite what should have happened based on the power
+                applied then don't use that encoder since it may be bad
+             */
 
-            keepGoing = driver.keepGoing(position);
+            if(lastPowerA * (positionA - lastPositionA) < 0) {
+                keepPositionA = 0;
+//                RobotLog.d("OctobotMain::drive()::lastPowerA * (positionA - lastPositionA): " + (lastPowerA * (positionA - lastPositionA)));
+            }
 
-            RobotLog.d("OctobotMain::drive()::keepGoing: " + keepGoing);
+            if(lastPowerB * (positionB - lastPositionB) < 0) {
+                keepPositionB = 0;
+//                RobotLog.d("OctobotMain::drive()::lastPowerB * (positionB - lastPositionB): " + (lastPowerB * (positionB - lastPositionB)));
+            }
+
+            if(lastPowerC * (positionC - lastPositionC) < 0) {
+                keepPositionC = 0;
+//                RobotLog.d("OctobotMain::drive()::lastPowerC * (positionC - lastPositionC): " + (lastPowerC * (positionC - lastPositionC)));
+            }
+
+            if(lastPowerD * (positionD - lastPositionD) < 0) {
+                keepPositionD = 0;
+//                RobotLog.d("OctobotMain::drive()::lastPowerD * (positionD - lastPositionD): " + (lastPowerD * (positionD - lastPositionD)));
+            }
+
+            lastPositionA = positionA;
+            lastPositionB = positionB;
+            lastPositionC = positionC;
+            lastPositionD = positionD;
+
+            lastPowerA = _motorA.getPower();
+            lastPowerB = _motorB.getPower();
+            lastPowerC = _motorC.getPower();
+            lastPowerD = _motorD.getPower();
+
+//            RobotLog.d("OctobotMain::drive()::keepPositionA: " + keepPositionA);
+//            RobotLog.d("OctobotMain::drive()::keepPositionB: " + keepPositionB);
+//            RobotLog.d("OctobotMain::drive()::keepPositionC: " + keepPositionC);
+//            RobotLog.d("OctobotMain::drive()::keepPositionD: " + keepPositionD);
+
+            if(keepPositionA + keepPositionB + keepPositionC + keepPositionD != 0) {
+                int position = (Math.abs(positionA) * keepPositionA + Math.abs(positionB) * keepPositionB + Math.abs(positionC) * keepPositionC + Math.abs(positionD) * keepPositionD) /
+                        (keepPositionA + keepPositionB + keepPositionC + keepPositionD);
+
+//                RobotLog.d("OctobotMain::drive()::position: " + position);
+//
+//                RobotLog.d("OctobotMain::drive()::G");
+
+                keepGoing = driver.keepGoing(position);
+
+//                RobotLog.d("OctobotMain::drive()::keepGoing: " + keepGoing);
+            }
+            else {
+//                RobotLog.d("OctobotMain::drive()::No valid position");
+                keepGoing = false;
+            }
 
             Thread.sleep(5);
 
-            RobotLog.d("OctobotMain::drive::H");
+//            RobotLog.d("OctobotMain::drive::H");
 
-            idle();
+//            idle();
         }
-
-        _sonarRight.stopAutoPing();
-        _sonarLeft.stopAutoPing();
 
         RobotLog.d("OctobotMain::drive::steering update interval: " + (System.currentTimeMillis() - startTime) / numSteeringUpdates);
 
-        stopMotors();
+        if(stopMotors) {
+            stopMotors();
+        }
 
         RobotLog.d("OctobotMain::drive()::I");
 
@@ -442,15 +501,15 @@ public abstract class OctobotMain extends LinearOpMode
 
     }
 
-    public void turn(TurnerIF turner) throws InterruptedException {
-
-        RobotLog.d("OctobotMain::turn()::D");
-
+    public void turn(TurnerIF turner, boolean runUsingEncoders, boolean stopMotors) throws InterruptedException {
         turner.start();
 
-        runUsingEncoders();
-
-        RobotLog.d("OctobotMain::turn()::E");
+        if(runUsingEncoders) {
+            runUsingEncoders();
+        }
+        else {
+            runWithoutEncoders();
+        }
 
         boolean keepGoing = true;
 
@@ -458,28 +517,33 @@ public abstract class OctobotMain extends LinearOpMode
         double lastPower = 0;
 
         while(keepGoing) {
-            RobotLog.d("OctobotMain::turn()::F");
+            int positionA = _motorA.getCurrentPosition();
+            int positionB = _motorB.getCurrentPosition();
+            int positionC = _motorC.getCurrentPosition();
+            int positionD = _motorD.getCurrentPosition();
+
+            RobotLog.d("OctobotMain::turn()::positionA: " + positionA);
+            RobotLog.d("OctobotMain::turn()::positionB: " + positionB);
+            RobotLog.d("OctobotMain::turn()::positionC: " + positionC);
+            RobotLog.d("OctobotMain::turn()::positionD: " + positionD);
 
 //            waitForNextHardwareCycle();
 
-            RobotLog.d("OctobotMain::turn()::G");
-
             double power = turner.getPower();
-
-            RobotLog.d("OctobotMain::turn()::H");
-
             double scaleFactor = turner.getScaleFactor();
 
             RobotLog.d("OctobotMain::turn()::power: " + power);
             RobotLog.d("OctobotMain::turn()::scaleFactor: " + scaleFactor);
 
-            if(power != lastPower || scaleFactor != lastScaleFactor) {
-                RobotLog.d("OctobotMain::turn()::I");
+            keepGoing = turner.keepGoing(0);
 
+            RobotLog.d("OctobotMain::turn()::keepGoing: " + keepGoing);
+
+            if (keepGoing && (power != lastPower || scaleFactor != lastScaleFactor)) {
                 if (Double.isNaN(scaleFactor)) {
                     keepGoing = false;
                 } else {
-                    RobotLog.d("OctobotMain::turn()::J");
+                    RobotLog.d("OctobotMain::turn()::power * scaleFactor: " + power * scaleFactor);
 
                     _motorA.setPower(-power * scaleFactor);
                     _motorB.setPower(-power * scaleFactor);
@@ -491,9 +555,7 @@ public abstract class OctobotMain extends LinearOpMode
                 lastScaleFactor = scaleFactor;
             }
 
-            RobotLog.d("OctobotMain::turn()::K");
-
-            Thread.sleep(5);
+            Thread.sleep(1);
 
 //            idle();
 //            try {
@@ -503,11 +565,9 @@ public abstract class OctobotMain extends LinearOpMode
 //            }
         }
 
-        RobotLog.d("OctobotMain::turn()::L");
-
-        stopMotors();
-
-        RobotLog.d("OctobotMain::turn()::M");
+        if(stopMotors) {
+            stopMotors();
+        }
     }
     public void balance(){
         float leftX = gamepad1.left_stick_x;
@@ -542,7 +602,6 @@ public abstract class OctobotMain extends LinearOpMode
         leftX = multiplier * rollAngle;
         rightX = multiplier * rollAngle;
 
-
         float Yf = (leftY + rightY) / 2f;
         float Yt = (leftY - rightY) / 2f;
         float strafeX = -(leftX + rightX) / 2f;
@@ -551,12 +610,12 @@ public abstract class OctobotMain extends LinearOpMode
         float Kt = 1f;
         float Ks = 1f;
 
-        float frontLeft = Kf * Yf + Kt * Yt + Ks * strafeX;
-        float frontRight = Kf * Yf - Kt * Yt - Ks * strafeX;
-        float rearLeft = Kf * Yf + Kt * Yt - Ks * strafeX;
-        float rearRight = Kf * Yf - Kt * Yt + Ks * strafeX;
+        double frontLeft = Kf * Yf + Kt * Yt + Ks * strafeX;
+        double frontRight = Kf * Yf - Kt * Yt - Ks * strafeX;
+        double rearLeft = Kf * Yf + Kt * Yt - Ks * strafeX;
+        double rearRight = Kf * Yf - Kt * Yt + Ks * strafeX;
 
-        float maxPower = Math.max(Math.max(Math.abs(frontLeft), Math.abs(frontRight)), Math.max(Math.abs(rearLeft), Math.abs(rearRight)));
+        double maxPower = Math.max(Math.max(Math.abs(frontLeft), Math.abs(frontRight)), Math.max(Math.abs(rearLeft), Math.abs(rearRight)));
 
         if (maxPower > 1) {
             frontLeft /= maxPower;
@@ -565,10 +624,10 @@ public abstract class OctobotMain extends LinearOpMode
             rearRight /= maxPower;
         }
 
-        float motorAPower = RobotControl.convertStickToPower(frontRight);
-        float motorBPower = RobotControl.convertStickToPower(rearRight);
-        float motorCPower = RobotControl.convertStickToPower(frontLeft);
-        float motorDPower = RobotControl.convertStickToPower(rearLeft);
+        double motorAPower = RobotControl.convertStickToPower(rearLeft);
+        double motorBPower = RobotControl.convertStickToPower(frontLeft);
+        double motorCPower = RobotControl.convertStickToPower(frontRight);
+        double motorDPower = RobotControl.convertStickToPower(rearRight);
 
         RobotLog.d("Motor Power " + motorAPower + " " + motorBPower + " " + motorCPower + " " + motorDPower);
         telemetry.addData("Motor Power", motorAPower + " " + motorBPower + " " + motorCPower + " " + motorDPower);
@@ -579,7 +638,7 @@ public abstract class OctobotMain extends LinearOpMode
         _motorD.setPower(motorDPower);
     }
 
-    public Servo getGrabberServo(){
+    public Servo getGrabberServo() {
         float[] hsvValuesGrabber = new float[3];
 
         NormalizedRGBA colorsGrabber = _sensorRGB.getNormalizedColors();
@@ -589,6 +648,9 @@ public abstract class OctobotMain extends LinearOpMode
         float hueGrabber = hsvValuesGrabber[0];
         float saturationGrabber = hsvValuesGrabber[1];
 
+        RobotLog.d("OctobotMain::getGrabberServo()::hueGrabber: " + hueGrabber);
+        RobotLog.d("OctobotMain::getGrabberServo()::saturationGrabber: " + saturationGrabber);
+
         boolean isBlue = true;
 
         if (hueGrabber >= 0 && hueGrabber <= 90) {
@@ -597,13 +659,16 @@ public abstract class OctobotMain extends LinearOpMode
             isBlue = true;
         }
 
+        RobotLog.d("OctobotMain::getGrabberServo()::isBlue: " + isBlue);
+
         if(!isBlue){
-            return _servoBottom;
+            return _servoGrabberBlue;
         }
         else{
-            return _servoTop;
+            return _servoGrabberRed;
         }
     }
+
     public RelicRecoveryVuMark getVuforia(){
         RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.UNKNOWN;
 
@@ -631,84 +696,72 @@ public abstract class OctobotMain extends LinearOpMode
         return colors;
     }
 
-    public void jewel(double initialHeading, boolean side) throws InterruptedException {
-        _servoArm.setPosition(1);
+    public void waitUntilStopped(StopperIF stopper) throws InterruptedException {
+        stopper.start();
+
+        while(stopper.keepGoing(0)){
+            Thread.sleep(1);
+        }
+
+        stopper.finish();
+    }
+
+    public void jewel(double initialHeading, boolean isRedSide) throws InterruptedException {
+        _servoArm.setPosition(.8);
 
         sleep(1250);
 
-        float[] hsvValuesArm = new float[3];
+        SaturationStopper saturationStopper = new SaturationStopper(_sensorRGBArm, .5f, null);
+        turn(new IMUTurner(-5, 1, _imu1, .25, saturationStopper), true, true);
 
-        NormalizedRGBA colorsArm = getColorsRobust(_sensorRGBArm);
-
-        Color.colorToHSV(colorsArm.toColor(), hsvValuesArm);
-
-        float hueArm = hsvValuesArm[0];
-        float saturationArm = hsvValuesArm[1];
-
-        RobotLog.d("OctobotMain::jewel()::hueArm: " + hueArm);
-        RobotLog.d("OctobotMain::jewel()::saturationArm: " + saturationArm);
-
-        if(saturationArm < .5) {
-            RobotLog.d("OctobotMain::jewel()::turn closer");
-            turn(new IMUTurner(2, .1, _imu1, .2, .25));
-            colorsArm = getColorsRobust(_sensorRGBArm);
-            Color.colorToHSV(colorsArm.toColor(), hsvValuesArm);
-            hueArm = hsvValuesArm[0];
-            saturationArm = hsvValuesArm[1];
-            RobotLog.d("OctobotMain::jewel()::hueArm: " + hueArm);
-            RobotLog.d("OctobotMain::jewel()::saturationArm: " + saturationArm);
-        }
-
-        colorsArm = getColorsRobust(_sensorRGBArm);
-        Color.colorToHSV(colorsArm.toColor(), hsvValuesArm);
-        hueArm = hsvValuesArm[0];
-        saturationArm = hsvValuesArm[1];
-
-        if(saturationArm < .5){
-            turn(new IMUTurner(-(getCurrentHeading() - initialHeading), .1, _imu1, .2, .25));
-
-            _servoArm.setPosition(0);
-        }
-        else {
+        if(saturationStopper.getSaturation() >= .5){
             boolean isRed = true;
 
-
-            if (hueArm <= 260 && hueArm >= 120) {
+            if (saturationStopper.getHue() <= 260 && saturationStopper.getHue() >= 120) {
                 RobotLog.d("OctobotMain::jewel()::isRed = false");
                 isRed = false;
             }
 
             RobotLog.d("OctobotMain::jewel()::isRed: " + isRed);
 
-            if (isRed) {
-                turn(new IMUTurner(15 * (side ? 1 : -1), .7, _imu1, .2, 2));
-                turn(new IMUTurner(-15 * (side ? 1 : -1), .3, _imu1, .2, 2));
-            } else if (!isRed) {
-                turn(new IMUTurner(-15 * (side ? 1 : -1), .7, _imu1, .2, 2));
-                turn(new IMUTurner(15 * (side ? 1 : -1), .3, _imu1, .2, 2));
+            double degreesOffset = getCurrentHeading() - initialHeading;
+
+            RobotLog.d("OctobotMain::jewel()::degreesOffset: " + degreesOffset);
+
+            if (isRed ^ isRedSide) {
+                // The jewel is red and we are red, or the ball is blue and we are blue
+                turn(new IMUTurner(-10 - degreesOffset, 1, _imu1, 1, null), true, true);
+                _servoArm.setPosition(0);
+                turn(new IMUTurner(10, 1, _imu1, 1, null), true, true);
+            } else {
+                // We are the same color as the jewel
+                turn(new IMUTurner(10 - degreesOffset, 1, _imu1, 1, null), true, true);
+                _servoArm.setPosition(0);
+                turn(new IMUTurner(-10, 1, _imu1, 1, null), true, true);
             }
-
-            turn(new IMUTurner(-(getCurrentHeading() - initialHeading), .1, _imu1, .2, .25));
-
-            _servoArm.setPosition(0);
         }
+
+        _servoArm.setPosition(0);
+        sleep(250);
+
+        turn(new IMUTurner(-(getCurrentHeading() - initialHeading), 1, _imu1, 1, null), true, true);
     }
 
-    public void deliverBlockCorner(double initialHeading, Servo _servo, boolean side) throws InterruptedException {
-         SharpDistanceSensor irSensor = (side ? _irSensorRight : _irSensorLeft);
+    public void deliverBlockCorner(double targetHeading, Servo _servo, boolean isBlueSide) throws InterruptedException {
+        double minDistance = 20;
+
+        SharpDistanceSensor irSensor = (isBlueSide ? _irSensorRight : _irSensorLeft);
 
         Thread.sleep(100);
 
-        drive(new IMUDriver(.35, 0, _imu1, .04, initialHeading - 90, RobotControl.convertInches(side ? 2 : 5), null));
-
-        double minDistance = irSensor.getDistance() - 8;
+        drive(new IMUDriver(.6, 0, _imu1, .04, targetHeading, RobotControl.convertInches(isBlueSide ? 3 : 5), null), true, true);
 
         RobotLog.d("OctobotAutonomousBlueCorner::minDistance:: " + minDistance);
 
-        drive(new DistanceStopper((side ? _irSensorRight : _irSensorLeft), minDistance, Double.MAX_VALUE,
-                new IMUDriver(0, side ? .25 : -.25, _imu1, .04, initialHeading - 90, RobotControl.convertInchesStrafe(8), null)));
+        drive(new PillarDriver(irSensor, minDistance, Double.MAX_VALUE,
+                new IMUDriver(0, isBlueSide ? .45 : -.45, _imu1, .04, targetHeading, RobotControl.convertInchesStrafe(12), null)), true, true);
 
-        drive(new IMUDriver(0, side ? -.25 : .25, _imu1, .04, initialHeading - 90, RobotControl.convertInchesStrafe(2.5f), null));
+        drive(new IMUDriver(0, isBlueSide ? -.45 : .45, _imu1, .04, targetHeading, RobotControl.convertInchesStrafe(3f), null), true, true);
 
         while(!_button1.getState()){
             _motorSlide.setPower(-1);
@@ -718,22 +771,26 @@ public abstract class OctobotMain extends LinearOpMode
 
         _motorSlide.setPower(0);
 
-        _servo.setPosition(0);
+        _motorLift.setPower(-1);
+        Thread.sleep(800);
+        _motorLift.setPower(0);
+
+        _servo.setPosition(1);
     }
 
     public void deliverBlockSide(double initialHeading, Servo _servo, boolean side) throws InterruptedException {
-        drive(new IMUDriver(.35, 0, _imu1, .04, initialHeading, RobotControl.convertInches(2), null));
+        drive(new IMUDriver(.35, 0, _imu1, .04, initialHeading, RobotControl.convertInches(2), null), true, true);
 
         DistanceSensorIF distanceSensor = (side ? _irSensorRight : _irSensorLeft);
 
-        double minDistance = 20;
+        double minDistance = 25;
 
         RobotLog.d("OctobotAutonomousBlueCorner::minDistance:: " + minDistance);
 
-        drive(new PillarStopper(distanceSensor, minDistance, Double.MAX_VALUE,
-                new IMUDriver(0, side ? .25 : -.25, _imu1, .04, initialHeading, RobotControl.convertInchesStrafe(8), null)));
+        drive(new PillarDriver(distanceSensor, minDistance, Double.MAX_VALUE,
+                new IMUDriver(0, side ? .25 : -.25, _imu1, .04, initialHeading, RobotControl.convertInchesStrafe(8), null)), true, true);
 
-        drive(new IMUDriver(0, side ? -.25 : .25, _imu1, .04, initialHeading, RobotControl.convertInchesStrafe(1.5f), null));
+        drive(new IMUDriver(0, side ? -.25 : .25, _imu1, .04, initialHeading, RobotControl.convertInchesStrafe(1.5f), null), true, true);
 
         while(!_button1.getState()){
             _motorSlide.setPower(-1);
@@ -746,34 +803,138 @@ public abstract class OctobotMain extends LinearOpMode
         _servo.setPosition(0);
     }
 
+    public void deliverBlockSimple(double initialHeading, Servo grabberServo, boolean isRedSide) throws InterruptedException {
+        // Open grabber
+
+        if(grabberServo == null) {
+            _servoGrabberBlue.setPosition(1);
+            _servoGrabberRed.setPosition(1);
+        }
+        else {
+            grabberServo.setPosition(1);
+        }
+
+        // Drive back
+
+        drive(new IMUDriver(-.7, 0, _imu1, .04, initialHeading - 90, RobotControl.convertInches(3), null), true, true);
+
+        // Close grabber
+
+        if(grabberServo == null) {
+            _servoGrabberBlue.setPosition(0);
+            _servoGrabberRed.setPosition(0);
+        }
+        else {
+            grabberServo.setPosition(0);
+        }
+
+        // Lower lift
+
+        MotorRunner liftLower = new MotorRunner(_motorLift, -1, new TimeStopper(500, null));
+        liftLower.startMotor();
+
+        // Drive forward
+
+        drive(new IMUDriver(.7, 0, _imu1, .04, initialHeading - 90, RobotControl.convertInches(5 + (isRedSide ? 2 : 0)), null), true, true);
+
+        // Open grabbers
+
+        if(grabberServo == null) {
+            _servoGrabberBlue.setPosition(1);
+            _servoGrabberRed.setPosition(1);
+        }
+        else {
+            grabberServo.setPosition(1);
+        }
+
+    }
+
     public void afterBlockCorner(double initialHeading, boolean side) throws InterruptedException {
-        drive(new IMUDriver(-.35, 0, _imu1, .04, initialHeading - 90, RobotControl.convertInches(9), null));
+        drive(new IMUDriver(-.75, 0, _imu1, .04, initialHeading - 90, RobotControl.convertInches(6), null), true, true);
 
-        turn(new IMUTurner(-90, .6, _imu1, .2, 2));
-        turn(new IMUTurner(-90, .6, _imu1, .2, 2));
-
-        drive(new IMUDriver(-.35, 0, _imu1, .04, initialHeading + 90, RobotControl.convertInches(13), null));
+        turn(new IMUTurner(-90, .7, _imu1, 2, null), true, true);
+        turn(new IMUTurner(-90, .7, _imu1, 2, null), true, true);
     }
 
     public void afterBlockSide(double initialHeading, boolean side) throws InterruptedException {
-        drive(new IMUDriver(-.35, 0, _imu1, .04, initialHeading, RobotControl.convertInches(9), null));
+        drive(new IMUDriver(-.35, 0, _imu1, .04, initialHeading, RobotControl.convertInches(6), null), true, true);
 
-        turn(new IMUTurner(-90, .6, _imu1, .2, 2));
-        turn(new IMUTurner(-90, .6, _imu1, .2, 2));
+        turn(new IMUTurner(-90, .6, _imu1, 2, null), true, true);
+        turn(new IMUTurner(-90, .6, _imu1, 2, null), true, true);
     }
 
-    public void raiseLift1500() throws InterruptedException {
-        _motorLift.setPower(1);
 
-//        while(_motorLift.getCurrentPosition() < 1500) {
-//            Thread.sleep(5);
-//            idle();
-//        }
-        Thread.sleep(1000)   ;
+    void grabCubeFromPile(double targetHeading, boolean isRightColumn) throws InterruptedException {
+        CubeGrabberStopper cubeGrabberStopper = new CubeGrabberStopper(isRightColumn ? _irSensorRight : _irSensorLeft, null);
 
-        _motorLift.setPower(0);
+        drive(new IMUDriver(0, (isRightColumn ? -1 : 1) * .4f, _imu1, .04, targetHeading, RobotControl.convertInchesStrafe(20), cubeGrabberStopper), true, true);
+
+        double newHeading = getCurrentHeading();
+
+        drive(new IMUDriver(0, (isRightColumn ? -1 : 1) * .4f, _imu1, .04, newHeading, RobotControl.convertInchesStrafe(.5f), null), true, true);
+
+        drive(new IMUDriver(.5, 0, _imu1, .04, newHeading, RobotControl.convertInches(8), null), true, true);
+
+        _servoGrabberBlue.setPosition(0);
+        _servoGrabberRed.setPosition(0);
+        sleep(750);
+
+        // Raise the lift to get cubes off the floor
+
+        MotorRunner liftRaiser = new MotorRunner(_motorLift, 1, new TimeStopper(900, null));
+        liftRaiser.startMotor();
+
+        // Drive backward
+
+        drive(new IMUDriver(-1, 0, _imu1, .04, targetHeading, RobotControl.convertInches(10), null), true, true);
+
+        RobotLog.d("OctobotMain::grabCubeFromPile()::cubeGrabberStopper.getLastPosition(): " + cubeGrabberStopper.getLastPosition());
+
+        // Strafe to correct position
+
+        int strafeAdjustment = (isRightColumn ? -1 : 1 )* (-cubeGrabberStopper.getLastPosition() +  RobotControl.convertInchesStrafe(7.5f));
+
+        drive(new IMUDriver(0, (strafeAdjustment > 0 ? 1 : -1) * 1f, _imu1, .04, targetHeading, Math.abs(strafeAdjustment), null), true, true);
     }
 
+    void doTheWholeThing(double initialHeading, Servo grabberServo, RelicRecoveryVuMark vuMark, boolean isRedSide) throws InterruptedException {
+        // Turn toward crypto box
+
+        turn(new IMUTurner(-(getCurrentHeading() - initialHeading) - 90, .5, _imu1, 1, null), true, true);
+
+        deliverBlockSimple(initialHeading, grabberServo, isRedSide);
+
+        //if blue, true; if red, false
+
+        _servoGrabberBlue.setPosition(1);
+        _servoGrabberRed.setPosition(1);
+
+        // Drive backward
+
+        drive(new IMUDriver(-.8, 0, _imu1, .04, initialHeading - 90, RobotControl.convertInches(14), null), true, true);
+
+        // Turn toward cubes
+
+        RobotLog.d("OctobotAutonomousBlueCorner::Turn toward cubes");
+
+        turn(new IMUTurner(-(getCurrentHeading() - initialHeading) + 90, .6, _imu1, 1, null), true, true);
+
+        RobotLog.d("OctobotAutonomousBlueCorner::Grab from pile");
+
+        grabCubeFromPile(initialHeading + 90, vuMark == RelicRecoveryVuMark.RIGHT);
+
+        // Turn toward crypto box
+
+        turn(new IMUTurner(-(getCurrentHeading() - initialHeading) - 90, .7, _imu1, 1, null), true, true);
+
+        // Drive to crypto box
+
+        drive(new IMUDriver(.7, 0, _imu1, .04, initialHeading - 90, RobotControl.convertInches(7), null), true, true);
+
+        deliverBlockSimple(initialHeading, null, true);
+
+        drive(new IMUDriver(-.7, 0, _imu1, .04, initialHeading - 90, RobotControl.convertInches(7), null), true, true);
+    }
 
 }
 

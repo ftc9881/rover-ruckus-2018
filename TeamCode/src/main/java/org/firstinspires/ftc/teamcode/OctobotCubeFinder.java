@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
@@ -8,19 +9,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefau
 @Autonomous(name = "OctobotCubeFinder", group = "octobot")
 public class OctobotCubeFinder extends OctobotMain
 {
-    class DistanceLogger extends DefaultDriver {
-        DistanceSensorIF _distanceSensor;
-
-        public DistanceLogger(DistanceSensorIF distanceSensor, DriverIF driver) {
-            super(driver);
-            _distanceSensor = distanceSensor;
-        }
-
-        public boolean keepGoing(int position) {
-            RobotLog.d("DistanceLogger::distance::" + _distanceSensor.getDistance());
-            return super.keepGoing(position);
-        }
-    }
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -34,9 +22,13 @@ public class OctobotCubeFinder extends OctobotMain
 
         waitForStart();
 
-        DistanceLogger distanceLogger = new DistanceLogger(_irSensorLeft, null);
+        _servoGrabberBlue.setPosition(1);
+        _servoGrabberRed.setPosition(1);
+        sleep(750);
 
-        drive(new StrafeDriver(.25f, RobotControl.convertInchesStrafe(23), distanceLogger));
+        grabCubeFromPile(getCurrentHeading(), false);
+
+
     }
 
 }

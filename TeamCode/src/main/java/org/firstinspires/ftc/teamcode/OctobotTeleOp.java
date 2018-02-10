@@ -1,35 +1,26 @@
 package org.firstinspires.ftc.teamcode;
 
 import android.graphics.Color;
-import android.media.MediaPlayer;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.AnalogInput;
-import com.qualcomm.robotcore.hardware.ColorSensor;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.DeviceInterfaceModule;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
-import com.qualcomm.robotcore.hardware.DigitalChannelController;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.RobotLog;
 
-import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
-import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-
-import java.security.KeyStore;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @TeleOp(name = "OctobotTeleOp", group = "octobot")
 public class OctobotTeleOp extends OctobotMain {
     static final double GRIPPY_POWER = 1;
+
+    static List<Number> GRABBER_POSITIONS = new ArrayList<Number>();
+
+    static {
+        GRABBER_POSITIONS.add(0);
+        GRABBER_POSITIONS.add(.6);
+        GRABBER_POSITIONS.add(1);
+    }
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -65,6 +56,13 @@ public class OctobotTeleOp extends OctobotMain {
         final float values[] = hsvValues;
 
         float relicGrabberPosition = 0;
+
+        GrabberManager redGrabberState = new GrabberManager(_servoGrabberRed, GRABBER_POSITIONS, true);
+        GrabberManager blueGrabberState = new GrabberManager(_servoGrabberBlue, GRABBER_POSITIONS, true);
+
+        GrabberManager topGrabberState;
+        GrabberManager bottomGrabberState;
+
 
         while (opModeIsActive()) {
 
@@ -110,8 +108,8 @@ public class OctobotTeleOp extends OctobotMain {
             int positionC = _motorC.getCurrentPosition();
             int positionD = _motorD.getCurrentPosition();
 
-            RobotLog.d("Motor Position " + positionA + " " + positionB + " " + positionC + " " + positionD);
-            telemetry.addData("Motor Posistion", positionA + " " + positionB + " " + positionC + " " + positionD);
+            RobotLog.d("OctobotTeleOp::runOpMode()::Motor Position " + positionA + " " + positionB + " " + positionC + " " + positionD);
+            telemetry.addData("Motor Position", positionA + " " + positionB + " " + positionC + " " + positionD);
 
             /*
                 Button Actions
@@ -120,21 +118,24 @@ public class OctobotTeleOp extends OctobotMain {
             if (right && !_button1.getState()) {
                 _motorSlide.setPower(-1);
             } else if (left && !_button0.getState()) {
+                redGrabberState.setPositionIndex(0);
+                blueGrabberState.setPositionIndex(0);
+
                 _motorSlide.setPower(1);
             } else {
                 _motorSlide.setPower(0);
             }
 
             if (right2) {
-                _servoRelic.setPosition(.4f);
+                _servoRelic.setPosition(0);
             }
             else if (left2) {
-                _servoRelic.setPosition(.55f);
+                _servoRelic.setPosition(1);
             }
 
             if (up) {
                 _motorLift.setPower(1);
-            } else if (down && !_button3.getState()) {
+            } else if (down) {
                 _motorLift.setPower(-.5);
             } else{
                 _motorLift.setPower(0);
@@ -148,6 +149,9 @@ public class OctobotTeleOp extends OctobotMain {
                 float hue = hsvValues[0];
                 float saturation = hsvValues[1];
 
+                RobotLog.d("OctobotTeleOp::runOpMode()::hue: " + hue);
+                RobotLog.d("OctobotTeleOp::runOpMode()::saturation: " + saturation);
+
                 if (saturation > .1) {
                     if (hue >= 0 && hue <= 90) {
                         isRed = true;
@@ -155,43 +159,58 @@ public class OctobotTeleOp extends OctobotMain {
                         isRed = false;
                     }
                 }
+
+                RobotLog.d("OctobotTeleOp::runOpMode()::isRed: " + isRed);
             }
             catch(Exception e) {
                 statusMessage = "Color Sensor Problem";
                 isRed = false;
+                RobotLog.ee("OctobotTeleOp::runOpMode()::ColorSensor", e, e.getMessage());
             }
 
-            if (buttonY) {
-                if(isRed) {
-                    _servoTop.setPosition(0);
-                }
-                else {
-                    _servoBottom.setPosition(0);
-                }
-            } else if (buttonB) {
-                if(isRed) {
-                    _servoTop.setPosition(1);
-                }
-                else {
-                    _servoBottom.setPosition(1);
-                }
+//            if (buttonY) {
+//                if(isRed) {
+//                    _servoGrabberRed.setPosition(1);
+//                }
+//                else {
+//                    _servoGrabberBlue.setPosition(1);
+//                }
+//            } else if (buttonB) {
+//                if(isRed) {
+//                    _servoGrabberRed.setPosition(0);
+//                }
+//                else {
+//                    _servoGrabberBlue.setPosition(0);
+//                }
+//            }
+//
+//            if (buttonX) {
+//                if(isRed) {
+//                    _servoGrabberBlue.setPosition(1);
+//                }
+//                else {
+//                    _servoGrabberRed.setPosition(1);
+//                }
+//            } else if (buttonA) {
+//                if(isRed) {
+//                    _servoGrabberBlue.setPosition(0);
+//                }
+//                else {
+//                    _servoGrabberRed.setPosition(0);
+//                }
+//            }
+
+            if(isRed) {
+                topGrabberState = redGrabberState;
+                bottomGrabberState = blueGrabberState;
+            }
+            else {
+                topGrabberState = blueGrabberState;
+                bottomGrabberState = redGrabberState;
             }
 
-            if (buttonX) {
-                if(isRed) {
-                    _servoBottom.setPosition(0);
-                }
-                else {
-                    _servoTop.setPosition(0);
-                }
-            } else if (buttonA) {
-                if(isRed) {
-                    _servoBottom.setPosition(1);
-                }
-                else {
-                    _servoTop.setPosition(1);
-                }
-            }
+            topGrabberState.updateState(buttonY, buttonB);
+            bottomGrabberState.updateState(buttonX, buttonA);
 
             if (rightBumper) {
                 _motorSpinner.setPower(.3);
@@ -224,71 +243,124 @@ public class OctobotTeleOp extends OctobotMain {
                 Driving
              */
 
-            reverseMode = true;
+//            reverseMode = true;
+//
+//            if (reverseMode) {
+//                temp = -1 * leftX;
+//                leftX = -1 * rightX;
+//                rightX = temp;
+//
+//                temp = -1 * leftY;
+//                leftY = -1 * rightY;
+//                rightY = temp;
+//            }
 
-            if (reverseMode) {
-                temp = -1 * leftX;
-                leftX = -1 * rightX;
-                rightX = temp;
+            RobotLog.d("OctobotTeleOp::runOpMode()::Stick positions: " + leftY + " " + rightY + " " + leftX + " " + rightX);
 
-                temp = -1 * leftY;
-                leftY = -1 * rightY;
-                rightY = temp;
-            }
+//            float Yf = (leftY + rightY) / 2f;
+//            float Yt = (leftY - rightY) / 2f;
+//            float strafeX = -(leftX + rightX) / 2f;
+//
+//            float Kf = 1f;
+//            float Kt = 1f;
+//            float Ks = 1f;
+//
+//            float frontLeft = Kf * Yf + Kt * Yt + Ks * strafeX;
+//            float frontRight = Kf * Yf - Kt * Yt - Ks * strafeX;
+//            float rearLeft = Kf * Yf + Kt * Yt - Ks * strafeX;
+//            float rearRight = Kf * Yf - Kt * Yt + Ks * strafeX;
+//
+//            float maxPower = Math.max(Math.max(Math.abs(frontLeft), Math.abs(frontRight)), Math.max(Math.abs(rearLeft), Math.abs(rearRight)));
+//
+//            if (maxPower > 1) {
+//                frontLeft /= maxPower;
+//                frontRight /= maxPower;
+//                rearLeft /= maxPower;
+//                rearRight /= maxPower;
+//            }
+//
+//            float motorAPower = RobotControl.convertStickToPower(frontRight);
+//            float motorBPower = RobotControl.convertStickToPower(rearRight);
+//            float motorCPower = RobotControl.convertStickToPower(frontLeft);
+//            float motorDPower = RobotControl.convertStickToPower(rearLeft);
+//
+//            float powerAdjust;
+//
+//            if(leftTrigger>.3){
+//                powerAdjust = .25f;
+//            }
+//            else {
+//                powerAdjust = 1f;
+//            }
+//
+//            motorAPower *= powerAdjust;
+//            motorBPower *= powerAdjust;
+//            motorCPower *= powerAdjust;
+//            motorDPower *= powerAdjust;
+//
+//            RobotLog.d("OctobotTeleOp::runOpMode()::Motor Power: " + motorAPower + " " + motorBPower + " " + motorCPower + " " + motorDPower);
+//            telemetry.addData("Motor Power", motorAPower + " " + motorBPower + " " + motorCPower + " " + motorDPower);
+//
+//            _motorA.setPower(motorAPower);
+//            _motorB.setPower(motorBPower);
+//            _motorC.setPower(motorCPower);
+//            _motorD.setPower(motorDPower);
 
-            float Yf = (leftY + rightY) / 2f;
-            float Yt = (leftY - rightY) / 2f;
-            float strafeX = -(leftX + rightX) / 2f;
+            double speed;
+            speed = Math.sqrt(Math.pow(leftX,2) + Math.pow(leftY,2));
 
-            float Kf = 1f;
-            float Kt = 1f;
-            float Ks = 1f;
+            double angle;
+            angle = Math.atan2(-leftY, -leftX);
 
-            float frontLeft = Kf * Yf + Kt * Yt + Ks * strafeX;
-            float frontRight = Kf * Yf - Kt * Yt - Ks * strafeX;
-            float rearLeft = Kf * Yf + Kt * Yt - Ks * strafeX;
-            float rearRight = Kf * Yf - Kt * Yt + Ks * strafeX;
+            RobotLog.d("OctobotTeleOp::runOpMode()::Angle: " + angle + " " + (180 * angle / Math.PI));
 
-            float maxPower = Math.max(Math.max(Math.abs(frontLeft), Math.abs(frontRight)), Math.max(Math.abs(rearLeft), Math.abs(rearRight)));
+            double changingSpeed;
+            changingSpeed = rightX;
 
-            if (maxPower > 1) {
-                frontLeft /= maxPower;
-                frontRight /= maxPower;
-                rearLeft /= maxPower;
-                rearRight /= maxPower;
-            }
+            double frontLeft = speed * (Math.sin(angle - (Math.PI/4))) + changingSpeed;
+            double frontRight = speed * (Math.cos(angle - (Math.PI/4))) - changingSpeed;
+            double rearLeft = speed * (Math.cos(angle - (Math.PI/4))) + changingSpeed;
+            double rearRight = speed * (Math.sin(angle - (Math.PI/4))) - changingSpeed;
 
-            float motorAPower = RobotControl.convertStickToPower(frontRight);
-            float motorBPower = RobotControl.convertStickToPower(rearRight);
-            float motorCPower = RobotControl.convertStickToPower(frontLeft);
-            float motorDPower = RobotControl.convertStickToPower(rearLeft);
+            double effectiveSpeed = Math.max(Math.min(1, speed), Math.abs(changingSpeed));
+
+            double maxPower = Math.min(effectiveSpeed, Math.max(Math.max(Math.abs(frontLeft), Math.abs(frontRight)), Math.max(Math.abs(rearLeft), Math.abs(rearRight))));
+
+            RobotLog.d("OctobotTeleOp::runOpMode()::maxPower: " + maxPower);
+
+            double motorAPower = RobotControl.convertStickToPower(rearLeft  / maxPower);
+            double motorBPower = RobotControl.convertStickToPower(frontLeft / maxPower);
+            double motorCPower = RobotControl.convertStickToPower(rearRight / maxPower);
+            double motorDPower = RobotControl.convertStickToPower(frontRight / maxPower);
 
             float powerAdjust;
 
-            if(leftTrigger>.3){
-                powerAdjust = .25f;
-            }
-            else {
+            if(rightTrigger > .5) {
                 powerAdjust = 1f;
+                motorAPower *= powerAdjust;
+                motorBPower *= powerAdjust;
+                motorCPower *= powerAdjust;
+                motorDPower *= powerAdjust;
             }
-
-
-            motorAPower *= powerAdjust;
-            motorBPower *= powerAdjust;
-            motorCPower *= powerAdjust;
-            motorDPower *= powerAdjust;
-
-            RobotLog.d("Motor Power " + motorAPower + " " + motorBPower + " " + motorCPower + " " + motorDPower);
-            telemetry.addData("Motor Power", motorAPower + " " + motorBPower + " " + motorCPower + " " + motorDPower);
+            else if(leftTrigger > .5) {
+                powerAdjust = .3f;
+                motorAPower *= powerAdjust;
+                motorBPower *= powerAdjust;
+                motorCPower *= powerAdjust;
+                motorDPower *= powerAdjust;
+            }
+            else{
+                powerAdjust = .75f;
+                motorAPower *= powerAdjust;
+                motorBPower *= powerAdjust;
+                motorCPower *= powerAdjust;
+                motorDPower *= powerAdjust;
+            }
 
             _motorA.setPower(motorAPower);
             _motorB.setPower(motorBPower);
             _motorC.setPower(motorCPower);
             _motorD.setPower(motorDPower);
-
-            NormalizedRGBA colorsArm = _sensorRGBArm.getNormalizedColors();
-
-            Color.colorToHSV(colorsArm.toColor(), hsvValues);
 
             /*
                 Telemetry
@@ -327,6 +399,8 @@ public class OctobotTeleOp extends OctobotMain {
             telemetry.addData("Reverse Mode ", reverseMode);
 
             telemetry.addData("RGB sensor",hsvValues[0] + " " + hsvValues[1] + " " + hsvValues[2]);
+
+            telemetry.addData("irSensors",_irSensorLeft.getDistance() + " " + _irSensorRight.getDistance());
             telemetry.update();
 
             sleep(10);

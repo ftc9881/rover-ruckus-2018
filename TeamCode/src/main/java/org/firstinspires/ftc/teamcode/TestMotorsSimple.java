@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.util.RobotLog;
@@ -12,8 +13,7 @@ import com.qualcomm.robotcore.util.RobotLog;
  * will drive in a square pattern using sleep() 
  * and a for loop.
  */
-@Autonomous(name = "TestMotorsSimple", group = "Test")
-@Disabled
+@TeleOp(name = "TestMotorsSimple", group = "Test")
 public class TestMotorsSimple extends LinearOpMode
 {
     protected DcMotor _motorA;
@@ -34,6 +34,11 @@ public class TestMotorsSimple extends LinearOpMode
 
         _motorD = hardwareMap.dcMotor.get("motor_d");
         _motorD.setDirection(DcMotor.Direction.FORWARD);
+
+        _motorA.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        _motorB.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        _motorC.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        _motorD.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         waitForStart();
 

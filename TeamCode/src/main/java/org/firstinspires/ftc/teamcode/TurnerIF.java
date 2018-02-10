@@ -4,9 +4,7 @@ package org.firstinspires.ftc.teamcode;
  * Created by ftc on 2/2/2017.
  */
 
-public interface TurnerIF {
-    void start();
-
+public interface TurnerIF extends StopperIF {
     /**
      * Return the power that should be used for the motors
      * @return
@@ -18,6 +16,4 @@ public interface TurnerIF {
      * @return
      */
     double getScaleFactor();
-
-    void finish();
 }

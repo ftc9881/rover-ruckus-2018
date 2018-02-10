@@ -20,8 +20,8 @@ public class IMUDriver extends DefaultDriver {
     int _maxPosition;
     double _initialHeading;
 
-    public IMUDriver(double power, double strafePower, BNO055IMU imu, double strength, double initialHeading, int maxPosition, DriverIF driver) {
-        super(driver);
+    public IMUDriver(double power, double strafePower, BNO055IMU imu, double strength, double initialHeading, int maxPosition, StopperIF stopper) {
+        super(stopper);
 
         _power = power;
         _strafePower = strafePower;

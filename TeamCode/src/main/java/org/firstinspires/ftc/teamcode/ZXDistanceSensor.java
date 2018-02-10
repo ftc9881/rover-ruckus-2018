@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.I2cAddr;
 import com.qualcomm.robotcore.hardware.I2cDeviceSynch;
 import com.qualcomm.robotcore.hardware.I2cDeviceSynchDevice;
@@ -12,6 +13,7 @@ import com.qualcomm.robotcore.util.TypeConversion;
  */
 
 @I2cSensor(name = "ZX Distance", description = "Sparkfun ZX Distance Sensor", xmlTag = "ZXDistance")
+@Disabled
 public class ZXDistanceSensor extends I2cDeviceSynchDevice<I2cDeviceSynch> {
     public static final int DEF_I2CADDRESS = 0x20;
 

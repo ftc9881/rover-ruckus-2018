@@ -1,16 +1,14 @@
 package org.firstinspires.ftc.teamcode;
 
-import android.graphics.Color;
-
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
 
 @Autonomous(name = "OctobotAutonomousRedSide", group = "octobot")
+@Disabled
 public class OctobotAutonomousRedSide extends OctobotMain
 {
     @Override
@@ -60,6 +58,8 @@ public class OctobotAutonomousRedSide extends OctobotMain
 
         RobotLog.d("OctobotAutonomousBlueSide::C");
 
+
+
         telemetry.addLine("Waiting for start");
         telemetry.update();
 
@@ -82,13 +82,11 @@ public class OctobotAutonomousRedSide extends OctobotMain
 
         jewel(initialHeading, false);
 
-        raiseLift1500();
-
         RobotLog.d("OctobotAutonomousBlueSide::H");
 
         // Drive for 48 inches at .5 powe
 
-        drive(new IMUDriver(.7, 0, _imu1, .04, initialHeading, RobotControl.convertInches(25), null));
+        drive(new IMUDriver(.7, 0, _imu1, .04, initialHeading, RobotControl.convertInches(25), null), true, true);
 
         RobotLog.d("OctobotAutonomousBlueSide::I");
 
@@ -106,16 +104,16 @@ public class OctobotAutonomousRedSide extends OctobotMain
         RobotLog.d("OctobotAutonomousBlueSide::K");
 
         if (vuMark == RelicRecoveryVuMark.LEFT){
-            drive(new IMUDriver(.85, 0, _imu1, .04, initialHeading, RobotControl.convertInchesStrafe(15), null));
+            drive(new IMUDriver(.85, 0, _imu1, .04, initialHeading, RobotControl.convertInchesStrafe(15), null), true, true);
         }
         else if (vuMark == RelicRecoveryVuMark.CENTER){
-            drive(new IMUDriver(.85, 0, _imu1, .04, initialHeading, RobotControl.convertInchesStrafe(8), null));
+            drive(new IMUDriver(.85, 0, _imu1, .04, initialHeading, RobotControl.convertInchesStrafe(8), null), true, true);
         }
         else if (vuMark == RelicRecoveryVuMark.RIGHT){
-            drive(new IMUDriver(.85, 0, _imu1, .04, initialHeading, RobotControl.convertInchesStrafe(2), null));
+            drive(new IMUDriver(.85, 0, _imu1, .04, initialHeading, RobotControl.convertInchesStrafe(2), null), true, true);
         }
         else{
-            drive(new IMUDriver(.85, 0, _imu1, .04, initialHeading, RobotControl.convertInchesStrafe(8), null));
+            drive(new IMUDriver(.85, 0, _imu1, .04, initialHeading, RobotControl.convertInchesStrafe(8), null), true, true);
         }
 
         deliverBlockSide(initialHeading, _servo, false);

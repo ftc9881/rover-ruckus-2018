@@ -1,10 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
-import android.graphics.Color;
-
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.RobotLog;
 
@@ -28,9 +24,7 @@ public class OctobotAutonomousRedCorner extends OctobotMain
 
         double initialHeading = getCurrentHeading();
 
-        Servo _servo;
-
-        _servo = getGrabberServo();
+        Servo grabberServo = getGrabberServo();
 
 //        while (!_button3.getState()){
 //            RobotLog.d("OctobotAutonomousBlueCorner::_button3.getState()::" + _button3.getState());
@@ -47,88 +41,64 @@ public class OctobotAutonomousRedCorner extends OctobotMain
         resetNonDriveMotorEncoders();
 
         runUsingEncoders();
-        runNonDriveUsingEncoders();
-
+        runNonDriveWithoutEncoders();
 
 //       int initialLift =  _motorLift.getCurrentPosition();
 //
 //        RobotLog.d("OctobotAutonomousBlueCorner::_motorLift.getCurrentPosition():: " + _motorLift.getCurrentPosition());
-        RobotLog.d("OctobotAutonomousBlueCorner::B");
+        RobotLog.d("OctobotAutonomousRedCorner::B");
 
-        RobotLog.d("OctobotAutonomousBlueCorner::C");
+        RobotLog.d("OctobotAutonomousRedCorner::C");
 
         telemetry.addLine("Waiting for start");
         telemetry.update();
 
-        waitForStart();
-
         _servoLock.setPosition(.5);
 
-        _servo.setPosition(1);
+        grabberServo.setPosition(0);
+
+        waitForStart();
 
         RelicRecoveryVuMark vuMark = getVuforia();
 
-        RobotLog.d("OctobotAutonomousBlueCorner::VuMark::"+vuMark);
+        RobotLog.d("OctobotAutonomousRedCorner::VuMark::"+vuMark);
 
-        RobotLog.d("OctobotAutonomousBlueCorner::D");
+        RobotLog.d("OctobotAutonomousRedCorner::D");
 
         telemetry.addLine("Ready");
         telemetry.update();
 
-        RobotLog.d("OctobotAutonomousBlueCorner::E");
+        RobotLog.d("OctobotAutonomousRedCorner::E");
 
-        jewel(initialHeading, false);
+        MotorRunner liftRaiser = new MotorRunner(_motorLift, 1, new TimeStopper(900, null));
+        liftRaiser.startMotor();
 
-        RobotLog.d("OctobotAutonomousBlueCorner::F");
+        jewel(initialHeading, true);
 
-        raiseLift1500();
+        // Open slide once we're off the balancing stone
 
-        RobotLog.d("OctobotAutonomousBlueCorner::H");
+        MotorRunner slideRunner = new MotorRunner(_motorSlide, -1, new DigitalChannelStopper(_button1, false, 4000, null));
+        slideRunner.startMotor();
 
-        // Drive for 48 inches at .5 powe
+        // Drive to crypto box
 
-        drive(new IMUDriver(.7, 0, _imu1, .04, initialHeading, RobotControl.convertInches(29), null));
-
-        RobotLog.d("OctobotAutonomousBlueCorner::I");
-
-        // Strafe for 23 inches at .25 power
-
-//        double targetHeading = getCurrentHeading() + 90;
-//        targetHeading += (targetHeading > 180) ? -360 : (targetHeading < -180) ? 360 : 0;
-//
-//        double difference = targetHeading - initialHeading;
-//        difference += (difference > 180) ? -360 : (difference < -180) ? 360 : 0;
-
-        RobotLog.d("OctobotAutonomousBlueCorner::J");
-
-        turn(new IMUTurner((getCurrentHeading() - initialHeading), .1, _imu1, .2, .25));
-
-        RobotLog.d("OctobotAutonomousBlueCorner::K");
+        drive(new IMUDriver(.6, 0, _imu1, .04, initialHeading, RobotControl.convertInches(24), null), true, true);
 
         if (vuMark == RelicRecoveryVuMark.LEFT){
-            drive(new IMUDriver(.85, 0, _imu1, .04, initialHeading, RobotControl.convertInches(14), null));
+            drive(new IMUDriver(.6, 0, _imu1, .04, initialHeading, RobotControl.convertInches(16), null), true, true);
         }
         else if (vuMark == RelicRecoveryVuMark.CENTER){
-            drive(new IMUDriver(.85, 0, _imu1, .04, initialHeading, RobotControl.convertInches(7), null));
+            drive(new IMUDriver(.6, 0, _imu1, .04, initialHeading, RobotControl.convertInches(8.5f), null), true, true);
         }
         else if (vuMark == RelicRecoveryVuMark.RIGHT){
         }
         else{
-            drive(new IMUDriver(.85, 0, _imu1, .04, initialHeading, RobotControl.convertInches(7), null));
+            drive(new IMUDriver(.6, 0, _imu1, .04, initialHeading, RobotControl.convertInches(8.5f), null), true, true);
         }
 
-        turn(new IMUTurner(-(getCurrentHeading() - initialHeading) - 90, .3, _imu1, .2, 1));
-
-        //if blue, true; if red, false
-
-        deliverBlockCorner(initialHeading, _servo, false);
-
-        afterBlockCorner(initialHeading, false);
-
-        RobotLog.d("OctobotAutonomousBlueCorner::L");
+        doTheWholeThing(initialHeading, grabberServo, vuMark, true);
 
         stopVuforia();
-
     }
 
 }

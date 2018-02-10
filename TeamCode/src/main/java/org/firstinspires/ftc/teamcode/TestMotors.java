@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.util.RobotLog;
 
@@ -13,8 +14,6 @@ import com.qualcomm.robotcore.util.RobotLog;
  * and a for loop.
  */
 @Autonomous(name = "TestMotors", group = "Test")
-@Disabled
-
 public class TestMotors extends LinearOpMode
 {
     protected DcMotor _motorA;
@@ -36,10 +35,10 @@ public class TestMotors extends LinearOpMode
     @Override
     public void runOpMode() throws InterruptedException {
         _motorA = hardwareMap.dcMotor.get("motor_a");
-        _motorA.setDirection(DcMotor.Direction.REVERSE);
+        _motorA.setDirection(DcMotor.Direction.FORWARD);
 
         _motorB = hardwareMap.dcMotor.get("motor_b");
-        _motorB.setDirection(DcMotor.Direction.REVERSE);
+        _motorB.setDirection(DcMotor.Direction.FORWARD);
 
         _motorC = hardwareMap.dcMotor.get("motor_c");
         _motorC.setDirection(DcMotor.Direction.FORWARD);

@@ -20,6 +20,7 @@ import java.util.zip.ZipFile;
  * and a for loop.
  */
 @TeleOp(name = "TestDiagnostics", group = "Test")
+@Disabled
 public class TestDiagnostics extends LinearOpMode
 {
     @Override

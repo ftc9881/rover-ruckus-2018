@@ -25,6 +25,7 @@ import com.qualcomm.robotcore.util.RobotLog;
  * and a for loop.
  */
 @TeleOp(name = "TestColor", group = "test")
+@Disabled
 public class TestColor extends OctobotMain {
 
     @Override

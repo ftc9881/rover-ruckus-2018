@@ -59,6 +59,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  */
 
 @Autonomous(name="TestMaxSonarI2CXL", group="Test Sensors")  // @Autonomous(...) is the other common choice
+@Disabled
 public class TestMaxSonarI2CXL extends LinearOpMode {
 
     /* Declare OpMode members. */
