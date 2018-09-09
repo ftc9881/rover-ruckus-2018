@@ -37,24 +37,7 @@ public class TestSharpDistanceSensor extends OctobotMain {
         // wait for the start button to be pressed.
         waitForStart();
 
-        while (opModeIsActive()) {
-            // Reading voltage
-            double voltreadingLeft = (float) _irSensorLeft.getVoltage();
-            double voltreadingRight = (float) _irSensorRight.getVoltage();
-            //convert voltage to distance (cm)
 
-            double distanceLeft = _irSensorLeft.getDistance();
-            double distanceRight = _irSensorRight.getDistance();
-
-            telemetry.addData("time", time);
-            telemetry.addData("voltage", "%f %f", voltreadingLeft, voltreadingRight);
-            // this is our calculated value
-            telemetry.addData("distance", "%f %f", distanceLeft, distanceRight);
-            telemetry.update();
-
-            RobotLog.d("SharpDistanceSensor::voltage " + voltreadingLeft + " " + voltreadingRight);
-            RobotLog.d("SharpDistanceSensor::distance " + distanceLeft + " " + distanceRight);
-        }
     }
 
 

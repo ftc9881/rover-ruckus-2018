@@ -31,9 +31,9 @@ public class DistanceSensorStopper extends DefaultStopper {
         if(keepGoing) {
             double distance = _distanceSensor.getDistance();
 
-            RobotLog.d("DistanceSensorStopper::keepGoing:: " + distance);
+            RobotLog.d("DistanceSensorStopper::keepGoing()::distance " + distance);
 
-            if (distance < _minDistance || distance > _maxDistance) {
+            if ((!Double.isNaN(_minDistance) && distance < _minDistance) || (!Double.isNaN(_maxDistance) && distance > _maxDistance)) {
                 keepGoing = false;
             }
         }

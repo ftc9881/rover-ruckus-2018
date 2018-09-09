@@ -30,7 +30,7 @@ public class SharpDistanceSensor implements DistanceSensorIF {
     }
 
     public double getDistance() {
-        double voltReading = _analogInput.getVoltage();
+        double voltReading = getVoltage();
 
         if(_a * voltReading - _b > 0) {
             return (1 / (_a * voltReading - _b)) - _c;

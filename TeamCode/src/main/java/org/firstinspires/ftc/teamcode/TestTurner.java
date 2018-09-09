@@ -23,7 +23,7 @@ public class TestTurner extends OctobotMain
 
         waitForStart();
 
-        double power = .6;
+        double power = .5;
         boolean runUsingEncoders = true;
 
         RobotLog.d("TestTurner::180");

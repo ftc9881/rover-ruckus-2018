@@ -76,6 +76,8 @@ public class IMUTurner extends DefaultStopper implements TurnerIF {
         double heading = absHeading - _initialHeading;
         heading += (heading > 180) ? -360 : (heading < -180) ? 360 : 0;
 
+        RobotLog.d("IMUTurner::getScaleFactor()::heading " + heading);
+
 //        RobotLog.d("IMUTurner::getSteeringFactor::heading: " + heading);
 
         double difference = _degrees - heading;

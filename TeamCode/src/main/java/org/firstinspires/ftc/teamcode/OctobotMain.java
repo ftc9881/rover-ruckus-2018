@@ -4,6 +4,7 @@ import android.graphics.Color;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
@@ -44,8 +45,8 @@ public abstract class OctobotMain extends LinearOpMode
     protected DcMotor _motorScissor;
 
 
-    public DigitalChannel _button0 = null;
-    public DigitalChannel _button1 = null;
+    public DigitalChannel _frontSliderLimit = null;
+    public DigitalChannel _rearSliderLimit = null;
     public DigitalChannel _button2 = null;
     public DigitalChannel _button3 = null;
 
@@ -55,14 +56,13 @@ public abstract class OctobotMain extends LinearOpMode
 
 
     //DeviceInterfaceModule _cdim;
-    NormalizedColorSensor _sensorRGB;
+    ColorSensor _sensorRGB;
     NormalizedColorSensor _sensorRGBArm;
 
-    public Servo _servoGrabberRed = null;
-    public Servo _servoGrabberBlue = null;
-    public Servo _servoArm = null;
-    public Servo _servoRelic = null;
-    public Servo _servoLock = null;
+    public Servo _servoA = null;
+    public Servo _servoB = null;
+    public Servo _servoC = null;
+    public Servo _servoD = null;
 
     // we assume that the LED pin of the RGB sensor is connected to
     // digital port 5 (zero indexed).
@@ -81,7 +81,7 @@ public abstract class OctobotMain extends LinearOpMode
     float rollAngle;
 
     /*
-        IR Sensors
+        IR Sensorsf
      */
 
     SharpDistanceSensor _irSensorLeft;
@@ -151,11 +151,11 @@ public abstract class OctobotMain extends LinearOpMode
 
         RobotLog.d("OctobotMain::initialize::initialize buttons");
 
-        _button0 = hardwareMap.digitalChannel.get("button_0");
-        _button0.setMode(DigitalChannel.Mode.INPUT);
+        _frontSliderLimit = hardwareMap.digitalChannel.get("button_0");
+        _frontSliderLimit.setMode(DigitalChannel.Mode.INPUT);
 
-        _button1 = hardwareMap.digitalChannel.get("button_1");
-        _button1.setMode(DigitalChannel.Mode.INPUT);
+        _rearSliderLimit = hardwareMap.digitalChannel.get("button_1");
+        _rearSliderLimit.setMode(DigitalChannel.Mode.INPUT);
 
         _button2 = hardwareMap.digitalChannel.get("button_2");
         _button2.setMode(DigitalChannel.Mode.INPUT);
@@ -169,11 +169,10 @@ public abstract class OctobotMain extends LinearOpMode
 
         RobotLog.d("OctobotMain::initialize::initialize servos");
 
-        _servoGrabberRed = hardwareMap.servo.get("servo_top");
-        _servoGrabberBlue = hardwareMap.servo.get("servo_bottom");
-        _servoArm = hardwareMap.servo.get("servo_arm");
-        _servoRelic = hardwareMap.servo.get("servo_relic");
-        _servoLock = hardwareMap.servo.get("servo_lock");
+        _servoA = hardwareMap.servo.get("servo_top");
+        _servoB = hardwareMap.servo.get("servo_bottom");
+        _servoC = hardwareMap.servo.get("servo_arm");
+        _servoD = hardwareMap.servo.get("servo_relic");
 
         /*
             Initialize IMU
@@ -215,7 +214,8 @@ public abstract class OctobotMain extends LinearOpMode
 
         RobotLog.d("OctobotMain::initialize::initialize color sensor");
 
-        _sensorRGB = hardwareMap.get(NormalizedColorSensor.class, "color_sensor");
+        _sensorRGB = hardwareMap.colorSensor.get("color_sensor");
+//        _sensorRGB = hardwareMap.get(NormalizedColorSensor.class, "color_sensor");
         _sensorRGBArm = hardwareMap.get(NormalizedColorSensor.class, "color_sensor_2");
 
         /*
@@ -480,24 +480,20 @@ public abstract class OctobotMain extends LinearOpMode
                 keepGoing = false;
             }
 
-            Thread.sleep(5);
-
-//            RobotLog.d("OctobotMain::drive::H");
-
-//            idle();
+            idle();
         }
 
-        RobotLog.d("OctobotMain::drive::steering update interval: " + (System.currentTimeMillis() - startTime) / numSteeringUpdates);
+//        RobotLog.d("OctobotMain::drive::steering update interval: " + (System.currentTimeMillis() - startTime) / numSteeringUpdates);
 
         if(stopMotors) {
             stopMotors();
         }
 
-        RobotLog.d("OctobotMain::drive()::I");
+//        RobotLog.d("OctobotMain::drive()::I");
 
         driver.finish();
 
-        RobotLog.d("OctobotMain::drive()::J");
+//        RobotLog.d("OctobotMain::drive()::J");
 
     }
 
@@ -638,43 +634,49 @@ public abstract class OctobotMain extends LinearOpMode
         _motorD.setPower(motorDPower);
     }
 
-    public Servo getGrabberServo() {
-        float[] hsvValuesGrabber = new float[3];
-
-        NormalizedRGBA colorsGrabber = _sensorRGB.getNormalizedColors();
-
-        Color.colorToHSV(colorsGrabber.toColor(), hsvValuesGrabber);
-
-        float hueGrabber = hsvValuesGrabber[0];
-        float saturationGrabber = hsvValuesGrabber[1];
-
-        RobotLog.d("OctobotMain::getGrabberServo()::hueGrabber: " + hueGrabber);
-        RobotLog.d("OctobotMain::getGrabberServo()::saturationGrabber: " + saturationGrabber);
-
-        boolean isBlue = true;
-
-        if (hueGrabber >= 0 && hueGrabber <= 90) {
-            isBlue = false;
-        } else if (hueGrabber <= 260 && hueGrabber >= 120) {
-            isBlue = true;
-        }
-
-        RobotLog.d("OctobotMain::getGrabberServo()::isBlue: " + isBlue);
-
-        if(!isBlue){
-            return _servoGrabberBlue;
-        }
-        else{
-            return _servoGrabberRed;
-        }
-    }
+//    public Servo getGrabberServo() {
+//        float[] hsvValuesGrabber = new float[3];
+//
+////        NormalizedRGBA colorsGrabber = _sensorRGB.getNormalizedColors();
+////        Color.colorToHSV(colorsGrabber.toColor(), hsvValuesGrabber);
+//
+//        Color.RGBToHSV((_sensorRGB.red() * 255) / 800, (_sensorRGB.green() * 255) / 800, (_sensorRGB.blue() * 255) / 800, hsvValuesGrabber);
+//
+//        float hueGrabber = hsvValuesGrabber[0];
+//        float saturationGrabber = hsvValuesGrabber[1];
+//
+//        RobotLog.d("OctobotMain::getGrabberServo()::hueGrabber: " + hueGrabber);
+//        RobotLog.d("OctobotMain::getGrabberServo()::saturationGrabber: " + saturationGrabber);
+//
+//        boolean isBlue = true;
+//
+//        if (hueGrabber >= 0 && hueGrabber <= 90) {
+//            isBlue = false;
+//        } else if (hueGrabber <= 260 && hueGrabber >= 120) {
+//            isBlue = true;
+//        }
+//
+//        RobotLog.d("OctobotMain::getGrabberServo()::isBlue: " + isBlue);
+//
+//        if(!isBlue){
+//            return _servoGrabberBlue;
+//        }
+//        else{
+//            return _servoGrabberRed;
+//        }
+   // }
 
     public RelicRecoveryVuMark getVuforia(){
+        int count = 0;
         RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.UNKNOWN;
 
-        while(vuMark == RelicRecoveryVuMark.UNKNOWN){
+        while(vuMark == RelicRecoveryVuMark.UNKNOWN && count < 400){
             vuMark = getDisplayedVuMark();
             sleep(5);
+            count += 1;
+        }
+        if(vuMark == RelicRecoveryVuMark.UNKNOWN){
+            vuMark  = RelicRecoveryVuMark.CENTER;
         }
         return vuMark;
     }
@@ -706,148 +708,146 @@ public abstract class OctobotMain extends LinearOpMode
         stopper.finish();
     }
 
-    public void jewel(double initialHeading, boolean isRedSide) throws InterruptedException {
-        _servoArm.setPosition(.8);
+//    public void jewel(double initialHeading, boolean isRedSide) throws InterruptedException {
+//        _servoArm.setPosition(1);
 
-        sleep(1250);
+//        sleep(1250);
+//
+//        SaturationStopper saturationStopper = new SaturationStopper(_sensorRGBArm, .5f, null);
+//        turn(new IMUTurner(5, 1, _imu1, .25, saturationStopper), true, true);
+//
+//        if(saturationStopper.getSaturation() >= .5){
+//            boolean isRed = true;
+//
+//            if (saturationStopper.getHue() <= 260 && saturationStopper.getHue() >= 120) {
+//                RobotLog.d("OctobotMain::jewel()::isRed = false");
+//                isRed = false;
+//            }
+//
+//            RobotLog.d("OctobotMain::jewel()::isRed: " + isRed);
+//
+//            double degreesOffset = getCurrentHeading() - initialHeading;
+//
+//            RobotLog.d("OctobotMain::jewel()::degreesOffset: " + degreesOffset);
+//
+//            if (isRed ^ isRedSide) {
+//                turn(new IMUTurner(10 - degreesOffset, 1, _imu1, 2, null), true, true);
+//                _servoArm.setPosition(0);
+//                turn(new IMUTurner(-10, 1, _imu1, 2, null), true, true);
+//                // The jewel is red and we are red, or the ball is blue and we are blue
+//            } else {
+//                // We are the same color as the jewel
+//                turn(new IMUTurner(-10 - degreesOffset, 1, _imu1, 2, null), true, true);
+//                _servoArm.setPosition(0);
+//                turn(new IMUTurner(10, 1, _imu1, 2, null), true, true);
+//            }
+//        }
+//
+//        _servoArm.setPosition(0);
+//        sleep(250);
+//
+//        turn(new IMUTurner(-(getCurrentHeading() - initialHeading), 1, _imu1, 1, null), true, true);
+   // }
 
-        SaturationStopper saturationStopper = new SaturationStopper(_sensorRGBArm, .5f, null);
-        turn(new IMUTurner(-5, 1, _imu1, .25, saturationStopper), true, true);
+    public void deliverBlockCorner(double targetHeading, Servo grabberServo, Servo otherGrabber, boolean isBlueSide) throws InterruptedException {
+        double minDistance = isBlueSide ? 40 : 40;
 
-        if(saturationStopper.getSaturation() >= .5){
-            boolean isRed = true;
-
-            if (saturationStopper.getHue() <= 260 && saturationStopper.getHue() >= 120) {
-                RobotLog.d("OctobotMain::jewel()::isRed = false");
-                isRed = false;
-            }
-
-            RobotLog.d("OctobotMain::jewel()::isRed: " + isRed);
-
-            double degreesOffset = getCurrentHeading() - initialHeading;
-
-            RobotLog.d("OctobotMain::jewel()::degreesOffset: " + degreesOffset);
-
-            if (isRed ^ isRedSide) {
-                // The jewel is red and we are red, or the ball is blue and we are blue
-                turn(new IMUTurner(-10 - degreesOffset, 1, _imu1, 1, null), true, true);
-                _servoArm.setPosition(0);
-                turn(new IMUTurner(10, 1, _imu1, 1, null), true, true);
-            } else {
-                // We are the same color as the jewel
-                turn(new IMUTurner(10 - degreesOffset, 1, _imu1, 1, null), true, true);
-                _servoArm.setPosition(0);
-                turn(new IMUTurner(-10, 1, _imu1, 1, null), true, true);
-            }
-        }
-
-        _servoArm.setPosition(0);
-        sleep(250);
-
-        turn(new IMUTurner(-(getCurrentHeading() - initialHeading), 1, _imu1, 1, null), true, true);
-    }
-
-    public void deliverBlockCorner(double targetHeading, Servo _servo, boolean isBlueSide) throws InterruptedException {
-        double minDistance = 20;
-
-        SharpDistanceSensor irSensor = (isBlueSide ? _irSensorRight : _irSensorLeft);
-
-        Thread.sleep(100);
-
-        drive(new IMUDriver(.6, 0, _imu1, .04, targetHeading, RobotControl.convertInches(isBlueSide ? 3 : 5), null), true, true);
+        SharpDistanceSensor irSensor = _irSensorRight;
 
         RobotLog.d("OctobotAutonomousBlueCorner::minDistance:: " + minDistance);
 
-        drive(new PillarDriver(irSensor, minDistance, Double.MAX_VALUE,
-                new IMUDriver(0, isBlueSide ? .45 : -.45, _imu1, .04, targetHeading, RobotControl.convertInchesStrafe(12), null)), true, true);
+        drive(new IMUDriver(0, -.45, _imu1, .04, targetHeading, RobotControl.convertInchesStrafe(20),
+                new PillarStopper(irSensor, minDistance, Double.MAX_VALUE, null)),
+                true, true);
 
-        drive(new IMUDriver(0, isBlueSide ? -.45 : .45, _imu1, .04, targetHeading, RobotControl.convertInchesStrafe(3f), null), true, true);
+//        drive(new IMUDriver(0, -.6, _imu1, .04, targetHeading, RobotControl.convertInchesStrafe(.5f), null), true, true);
 
-        while(!_button1.getState()){
-            _motorSlide.setPower(-1);
-            Thread.sleep(5);
-            idle();
-        }
+        drive(new IMUDriver(.6, 0, _imu1, .04, isBlueSide ? targetHeading: targetHeading, RobotControl.convertInches(isBlueSide ? 5 : 7), null), true, true);
 
-        _motorSlide.setPower(0);
-
-        _motorLift.setPower(-1);
-        Thread.sleep(800);
-        _motorLift.setPower(0);
-
-        _servo.setPosition(1);
+        grabberServo.setPosition(.75);
+        otherGrabber.setPosition(.75);
     }
 
-    public void deliverBlockSide(double initialHeading, Servo _servo, boolean side) throws InterruptedException {
-        drive(new IMUDriver(.35, 0, _imu1, .04, initialHeading, RobotControl.convertInches(2), null), true, true);
+    public void deliverBlockCornerSide(double targetHeading, Servo grabberServo, Servo otherGrabber, boolean isBlueSide, boolean isSide) throws InterruptedException {
+        double minDistance = isBlueSide ? 40 : 40;
 
-        DistanceSensorIF distanceSensor = (side ? _irSensorRight : _irSensorLeft);
-
-        double minDistance = 25;
+        SharpDistanceSensor irSensor = _irSensorRight;
 
         RobotLog.d("OctobotAutonomousBlueCorner::minDistance:: " + minDistance);
 
-        drive(new PillarDriver(distanceSensor, minDistance, Double.MAX_VALUE,
-                new IMUDriver(0, side ? .25 : -.25, _imu1, .04, initialHeading, RobotControl.convertInchesStrafe(8), null)), true, true);
+        drive(new IMUDriver(0, isSide ? .45 : -.45, _imu1, .04, targetHeading, RobotControl.convertInchesStrafe(36),
+                        new PillarStopper(irSensor, minDistance, Double.MAX_VALUE, null)),
+                true, true);
 
-        drive(new IMUDriver(0, side ? -.25 : .25, _imu1, .04, initialHeading, RobotControl.convertInchesStrafe(1.5f), null), true, true);
+//        drive(new IMUDriver(0, -.6, _imu1, .04, targetHeading, RobotControl.convertInchesStrafe(.5f), null), true, true);
 
-        while(!_button1.getState()){
-            _motorSlide.setPower(-1);
-            Thread.sleep(5);
-            idle();
-        }
+        drive(new IMUDriver(.6, 0, _imu1, .04, isBlueSide ? targetHeading: targetHeading, RobotControl.convertInches(isBlueSide ? 5 : 7), null), true, true);
 
-        _motorSlide.setPower(0);
-
-        _servo.setPosition(0);
+        grabberServo.setPosition(.75);
+        otherGrabber.setPosition(.75);
     }
 
-    public void deliverBlockSimple(double initialHeading, Servo grabberServo, boolean isRedSide) throws InterruptedException {
-        // Open grabber
+//    public void deliverBlockSimple(double initialHeading, Servo grabberServo, boolean isRedSide, boolean isCorner) throws InterruptedException {
+//        // Open grabber
+//
+//        if(grabberServo == null) {
+//            _servoGrabberBlue.setPosition(1);
+//            _servoGrabberRed.setPosition(1);
+//        }
+//        else {
+//            grabberServo.setPosition(1);
+//        }
+//
+//        // Drive back
+//
+//        drive(new IMUDriver(-.7, 0, _imu1, .04, isCorner ? initialHeading - 90 : initialHeading, RobotControl.convertInches(3), null), true, true);
+//
+//        // Close grabber
+//
+//        if(grabberServo == null) {
+//            _servoGrabberBlue.setPosition(0);
+//            _servoGrabberRed.setPosition(0);
+//        }
+//        else {
+//            grabberServo.setPosition(0);
+//        }
+//
+//        // Lower lift
+//
+//        MotorRunner liftLower = new MotorRunner(_motorLift, -1, 0, new TimeStopper(500, null));
+//        liftLower.startMotor();
+//
+//        // Drive forward
+//
+//        drive(new IMUDriver(.7, 0, _imu1, .04, isCorner ? initialHeading - 90 : initialHeading, RobotControl.convertInches(5 + (isRedSide ? 2 : 0)), null), true, true);
+//
+//        // Open grabbers
+//
+//        if(grabberServo == null) {
+//            _servoGrabberBlue.setPosition(1);
+//            _servoGrabberRed.setPosition(1);
+//        }
+//        else {
+//            grabberServo.setPosition(1);
+//        }
+//
+//    }
 
-        if(grabberServo == null) {
-            _servoGrabberBlue.setPosition(1);
-            _servoGrabberRed.setPosition(1);
-        }
-        else {
-            grabberServo.setPosition(1);
-        }
+//    public void deliverBlockSimple2(double initialHeading, Servo grabberServo, boolean isRedSide, boolean isCorner) throws InterruptedException {
+//        // Open grabber
+//
+//        if(grabberServo == null) {
+//            _servoGrabberBlue.setPosition(.75);
+//            _servoGrabberRed.setPosition(.75);
+//        }
+//        else {
+//            grabberServo.setPosition(1);
+//        }
 
         // Drive back
 
-        drive(new IMUDriver(-.7, 0, _imu1, .04, initialHeading - 90, RobotControl.convertInches(3), null), true, true);
-
-        // Close grabber
-
-        if(grabberServo == null) {
-            _servoGrabberBlue.setPosition(0);
-            _servoGrabberRed.setPosition(0);
-        }
-        else {
-            grabberServo.setPosition(0);
-        }
-
-        // Lower lift
-
-        MotorRunner liftLower = new MotorRunner(_motorLift, -1, new TimeStopper(500, null));
-        liftLower.startMotor();
-
-        // Drive forward
-
-        drive(new IMUDriver(.7, 0, _imu1, .04, initialHeading - 90, RobotControl.convertInches(5 + (isRedSide ? 2 : 0)), null), true, true);
-
-        // Open grabbers
-
-        if(grabberServo == null) {
-            _servoGrabberBlue.setPosition(1);
-            _servoGrabberRed.setPosition(1);
-        }
-        else {
-            grabberServo.setPosition(1);
-        }
-
-    }
+//        drive(new IMUDriver(-.7, 0, _imu1, .04, isCorner ? initialHeading - 90 : initialHeading, RobotControl.convertInches(4), null), true, true);
+//    }
 
     public void afterBlockCorner(double initialHeading, boolean side) throws InterruptedException {
         drive(new IMUDriver(-.75, 0, _imu1, .04, initialHeading - 90, RobotControl.convertInches(6), null), true, true);
@@ -865,7 +865,10 @@ public abstract class OctobotMain extends LinearOpMode
 
 
     void grabCubeFromPile(double targetHeading, boolean isRightColumn) throws InterruptedException {
-        CubeGrabberStopper cubeGrabberStopper = new CubeGrabberStopper(isRightColumn ? _irSensorRight : _irSensorLeft, null);
+        CubeGrabberStopper cubeGrabberStopper = new CubeGrabberStopper(
+                isRightColumn ? _irSensorRight : _irSensorLeft,
+                isRightColumn ? _irSensorLeft : _irSensorRight,
+                null, true, 30);
 
         drive(new IMUDriver(0, (isRightColumn ? -1 : 1) * .4f, _imu1, .04, targetHeading, RobotControl.convertInchesStrafe(20), cubeGrabberStopper), true, true);
 
@@ -875,13 +878,13 @@ public abstract class OctobotMain extends LinearOpMode
 
         drive(new IMUDriver(.5, 0, _imu1, .04, newHeading, RobotControl.convertInches(8), null), true, true);
 
-        _servoGrabberBlue.setPosition(0);
-        _servoGrabberRed.setPosition(0);
-        sleep(750);
+//        _servoGrabberBlue.setPosition(0);
+//        _servoGrabberRed.setPosition(0);
+//        sleep(750);
 
         // Raise the lift to get cubes off the floor
 
-        MotorRunner liftRaiser = new MotorRunner(_motorLift, 1, new TimeStopper(900, null));
+        MotorRunner liftRaiser = new MotorRunner(_motorLift, 1, 0, new TimeStopper(900, null));
         liftRaiser.startMotor();
 
         // Drive backward
@@ -892,32 +895,94 @@ public abstract class OctobotMain extends LinearOpMode
 
         // Strafe to correct position
 
-        int strafeAdjustment = (isRightColumn ? -1 : 1 )* (-cubeGrabberStopper.getLastPosition() +  RobotControl.convertInchesStrafe(7.5f));
+        double strafeAdjustment = (isRightColumn ? -1 : 1 )* (-cubeGrabberStopper.getLastPosition());
 
-        drive(new IMUDriver(0, (strafeAdjustment > 0 ? 1 : -1) * 1f, _imu1, .04, targetHeading, Math.abs(strafeAdjustment), null), true, true);
+        drive(new IMUDriver(0, (strafeAdjustment > 0 ? 1 : -1) * 1f, _imu1, .04, targetHeading, (int)(Math.abs(strafeAdjustment) * 1.25), null), true, true);
     }
 
-    void doTheWholeThing(double initialHeading, Servo grabberServo, RelicRecoveryVuMark vuMark, boolean isRedSide) throws InterruptedException {
-        // Turn toward crypto box
+    void grabCubeFromPileIR(double targetHeading, boolean isRightColumn, Servo otherGrabber, RelicRecoveryVuMark vuMark) throws InterruptedException {
+        CubeGrabberStopper cubeGrabberStopper = new CubeGrabberStopper(
+                isRightColumn ? _irSensorRight : _irSensorLeft,
+                isRightColumn ? _irSensorLeft : _irSensorRight,
+                null, false, 30);
 
-        turn(new IMUTurner(-(getCurrentHeading() - initialHeading) - 90, .5, _imu1, 1, null), true, true);
+        drive(new IMUDriver(0, .3f, _imu1, .04, targetHeading, RobotControl.convertInchesStrafe(25), cubeGrabberStopper), true, true);
 
-        deliverBlockSimple(initialHeading, grabberServo, isRedSide);
+        double newHeading = getCurrentHeading();
 
-        //if blue, true; if red, false
+        int strafeOffset = 0;
 
-        _servoGrabberBlue.setPosition(1);
-        _servoGrabberRed.setPosition(1);
+        if(cubeGrabberStopper.isEdgeDetectedLeading()) {
+            RobotLog.d("OctobotMain::grabCubeFromPileIR()::Found cube with leading sensor");
+//            strafeOffset = -RobotControl.convertInchesStrafe(1f);
+            drive(new IMUDriver(0, .4f, _imu1, .04, newHeading, RobotControl.convertInchesStrafe(1f), null), true, true);
+        }
+        else if(cubeGrabberStopper.isEdgeDetectedTrailing()) {
+            RobotLog.d("OctobotMain::grabCubeFromPileIR()::Found cube with trailing sensor");
+//            strafeOffset = RobotControl.convertInchesStrafe(1f);
+            drive(new IMUDriver(0, -.4f, _imu1, .04, newHeading, RobotControl.convertInchesStrafe(1f), null), true, true);
+        }
+
+        drive(new IMUDriver(.5, 0, _imu1, .04, newHeading, RobotControl.convertInches(11), null), true, true);
+
+        otherGrabber.setPosition(0);
+        sleep(1000);
+
+        // Raise the lift to get cubes off the floor
+
+        MotorRunner liftRaiser = new MotorRunner(_motorLift, 1, 0, new TimeStopper(900, new PositionStopper(Integer.MIN_VALUE, 2250, null)));
+        liftRaiser.startMotor();
 
         // Drive backward
 
-        drive(new IMUDriver(-.8, 0, _imu1, .04, initialHeading - 90, RobotControl.convertInches(14), null), true, true);
+        drive(new IMUDriver(-1, 0, _imu1, .04, targetHeading, RobotControl.convertInches(13), null), true, true);
+
+        RobotLog.d("OctobotMain::grabCubeFromPileIR()::cubeGrabberStopper.getLastPosition(): " + cubeGrabberStopper.getLastPosition());
+
+        // Strafe to correct position
+
+        int lastPosition = cubeGrabberStopper.getLastPosition();
+
+        RobotLog.d("OctobotMain::grabCubeFromPileIR()::lastPosition: " + lastPosition + " " + RobotControl.convertInchesStrafeInv(lastPosition));
+
+        double strafeAdjustment = -lastPosition + strafeOffset - RobotControl.convertInchesStrafe(5);
+
+        if(vuMark == RelicRecoveryVuMark.LEFT){
+        }
+        else if(vuMark == RelicRecoveryVuMark.CENTER){
+            strafeAdjustment += RobotControl.convertInchesStrafe(7.5f);
+        }
+        else{
+            strafeAdjustment += RobotControl.convertInchesStrafe(15f);
+        }
+
+        drive(new IMUDriver(0, (strafeAdjustment > 0 ? 1 : -1) * .3f, _imu1, .04, targetHeading, (int)(Math.abs(strafeAdjustment)), null), true, true);
+    }
+
+    void doTheWholeThing(double initialHeading, Servo grabberServo, Servo otherGrabber, RelicRecoveryVuMark vuMark, boolean isBlueSide) throws InterruptedException {
+        // Turn toward crypto box
+
+        turn(new IMUTurner(-(getCurrentHeading() - initialHeading) - 90, .6, _imu1, 1, null), true, true);
+
+        deliverBlockCorner(initialHeading - 90, grabberServo, otherGrabber, isBlueSide);
+
+        // Drive backward
+
+        drive(new IMUDriver(-.8, 0, _imu1, .04, initialHeading - 90, RobotControl.convertInches(isBlueSide ? 17 : 15), null), true, true);
+
+        //if blue, true; if red, false
+
+//        _servoGrabberBlue.setPosition(1);
+//        _servoGrabberRed.setPosition(1);
+
+        MotorRunner liftLower = new MotorRunner(_motorLift, -1, 0, new TimeStopper(900, null));
+        liftLower.startMotor();
 
         // Turn toward cubes
 
         RobotLog.d("OctobotAutonomousBlueCorner::Turn toward cubes");
 
-        turn(new IMUTurner(-(getCurrentHeading() - initialHeading) + 90, .6, _imu1, 1, null), true, true);
+        turn(new IMUTurner(-(getCurrentHeading() - initialHeading) + 89.9, .8, _imu1, 1, null), true, true);
 
         RobotLog.d("OctobotAutonomousBlueCorner::Grab from pile");
 
@@ -925,15 +990,71 @@ public abstract class OctobotMain extends LinearOpMode
 
         // Turn toward crypto box
 
+        MotorRunner liftRaiser = new MotorRunner(_motorLift, 1, 0, new TimeStopper(1500, null));
+        liftRaiser.startMotor();
+
         turn(new IMUTurner(-(getCurrentHeading() - initialHeading) - 90, .7, _imu1, 1, null), true, true);
 
         // Drive to crypto box
 
-        drive(new IMUDriver(.7, 0, _imu1, .04, initialHeading - 90, RobotControl.convertInches(7), null), true, true);
+        drive(new IMUDriver(.7, 0, _imu1, .04, initialHeading - 90, RobotControl.convertInches(isBlueSide ? 10 : 15), null), true, true);
 
-        deliverBlockSimple(initialHeading, null, true);
+//        deliverBlockSimple2(initialHeading, null, true, true);
+    }
 
-        drive(new IMUDriver(-.7, 0, _imu1, .04, initialHeading - 90, RobotControl.convertInches(7), null), true, true);
+    void doTheWholeThing2(double initialHeading, Servo grabberServo, Servo otherGrabber, RelicRecoveryVuMark vuMark, boolean isBlueSide) throws InterruptedException {
+        // Turn toward crypto box
+
+        RobotLog.d("OctobotMain::doTheWholeThing2::Turn right 90");
+
+        turn(new IMUTurner(-(getCurrentHeading() - initialHeading) + 90, .6, _imu1, 1, null), true, true);
+
+        RobotLog.d("OctobotMain::doTheWholeThing2::Start spinner");
+
+        RobotLog.d("OctobotMain::doTheWholeThing2::Drive toward glyphs");
+
+        drive(new IMUDriver(.8, 0, _imu1, .04, initialHeading + 90, RobotControl.convertInches(3), null), true, true);
+
+        RobotLog.d("OctobotMain::doTheWholeThing2::Open other grabber");
+
+        grabberServo.setPosition(1);
+
+        RobotLog.d("OctobotMain::doTheWholeThing2::Lower lift");
+
+        MotorRunner liftLower = new MotorRunner(_motorLift, -1, 0, new TimeStopper(800, new PositionStopper(120, Integer.MAX_VALUE, null)));
+        liftLower.startMotor();
+
+        /*
+            Make sure that the spinner has stopped
+         */
+
+        RobotLog.d("OctobotMain::doTheWholeThing2::Make sure spinner has stopped");
+
+        RobotLog.d("OctobotMain::doTheWholeThing2::Grab cube from pile");
+
+        grabCubeFromPileIR(initialHeading + 90, vuMark == RelicRecoveryVuMark.RIGHT, grabberServo, vuMark);
+
+        // Turn toward crypto box
+
+        RobotLog.d("OctobotMain::doTheWholeThing2::Turn toward crypto box");
+
+        turn(new IMUTurner(90, .7, _imu1, 5, null), true, true);
+        turn(new IMUTurner(90, .7, _imu1, 5, null), true, true);
+        turn(new IMUTurner(-(getCurrentHeading() - initialHeading) - 90, .7, _imu1, 1, null), true, true);
+
+        // Drive to crypto box
+
+        RobotLog.d("OctobotMain::doTheWholeThing2::Drive to crypto box");
+
+        //drive(new IMUDriver(.7, 0, _imu1, .04, initialHeading - 90, RobotControl.convertInches(3), null), true, true);
+
+        RobotLog.d("OctobotMain::doTheWholeThing2::Deliver block");
+
+        deliverBlockCorner(initialHeading - 90, grabberServo, otherGrabber, isBlueSide);
+
+        RobotLog.d("OctobotMain::doTheWholeThing2::Drive back");
+
+        drive(new IMUDriver(-.6, 0, _imu1, .04, initialHeading - 90, RobotControl.convertInches(5), null), true, true);
     }
 
 }
