@@ -34,9 +34,9 @@ public class SwerveTeleOp extends OctobotMain {
             double effectiveSpeed = Math.max(Math.min(1, power), Math.abs(changingSpeed));
 
             _servoA.setPosition(angle/180);
-            _servoB.setPosition(angle/180);
-            _servoC.setPosition(angle/180);
-            _servoD.setPosition(angle/180);
+//            _servoB.setPosition(angle/180);
+//            _servoC.setPosition(angle/180);
+//            _servoD.setPosition(angle/180);
 
             _motorA.setPower(power);
             _motorB.setPower(power);

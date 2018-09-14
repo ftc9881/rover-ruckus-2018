@@ -80,15 +80,6 @@ public class RobotInThreeDays extends OctobotMain {
                 Button Actions
              */
 
-            if (right && _rearSliderLimit.getState()) {
-                _motorSlide.setPower(-1);
-            } else if (left && _frontSliderLimit.getState()) {
-
-                _motorSlide.setPower(1);
-            } else {
-                _motorSlide.setPower(0);
-            }
-
             if (right2) {
 
             } else if (left2) {
@@ -111,45 +102,11 @@ public class RobotInThreeDays extends OctobotMain {
 
                 }
 
-                if (rightBumper2) {
-                    _motorSpinner.setPower(.3);
-                } else if (leftBumper2) {
-                    _motorSpinner.setPower(-.3);
-                } else {
-                    _motorSpinner.setPower(0);
-                }
-
-//            while(rightTrigger>.3){
-//                balance();
-//            }
-
                 if (rightTrigger2 > .5) {
 
                 } else if (leftTrigger2 > .5) {
 
                 }
-
-//            if(rightTrigger2>.5){
-//                _servoRotator.setPosition(1);
-//            }
-//            else if(leftTrigger2>.5){
-//                _servoRotator.setPosition(.5);
-//            }
-
-                if (rightY2 > .9) {
-                    _motorScissor.setPower(-1);
-                } else if (rightY2 < -.9) {
-                    _motorScissor.setPower(1);
-                } else {
-                    _motorScissor.setPower(0);
-                }
-//            if (leftY2 > .9)
-//                _servoRelic.setPosition(0);
-//            else if (leftY2 < -0.9)
-//                _servoRelic.setPosition(1);
-//            if (leftX2 > .9)
-//
-//            else if (leftX2 < -0.9)
 
             /*
                 Driving
