@@ -27,7 +27,6 @@ import com.qualcomm.robotcore.util.RobotLog;
  */
 
 @TeleOp(name = "Test Light Sensor", group = "Test")
-@Disabled
 public class TestLightSensor extends LinearOpMode {
     /* Public OpMode members. */
     public DigitalChannel _led0 = null;
@@ -37,13 +36,13 @@ public class TestLightSensor extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        _led0 = hardwareMap.digitalChannel.get("led_0");
-        _led0.setMode(DigitalChannel.Mode.OUTPUT);
-
-        _led1 = hardwareMap.digitalChannel.get("led_1");
-        _led1.setMode(DigitalChannel.Mode.OUTPUT);
-
-        _analog0 = hardwareMap.analogInput.get("analog_0");
+//        _led0 = hardwareMap.digitalChannel.get("led_0");
+//        _led0.setMode(DigitalChannel.Mode.OUTPUT);
+//
+//        _led1 = hardwareMap.digitalChannel.get("led_1");
+//        _led1.setMode(DigitalChannel.Mode.OUTPUT);
+//
+//        _analog0 = hardwareMap.analogInput.get("analog_0");
         _analog1 = hardwareMap.analogInput.get("analog_1");
 
         waitForStart();
@@ -52,17 +51,17 @@ public class TestLightSensor extends LinearOpMode {
             boolean buttonA = gamepad1.a;
             boolean buttonB = gamepad1.b;
 
-            _led0.setState(buttonA);
-            _led1.setState(buttonB);
-
-            double voltage0 =  _analog0.getVoltage();
+//            _led0.setState(buttonA);
+//            _led1.setState(buttonB);
+//
+//            double voltage0 =  _analog0.getVoltage();
             double voltage1 =  _analog1.getVoltage();
 
-            telemetry.addData("analog0", voltage0);
+            //telemetry.addData("analog0", voltage0);
             telemetry.addData("analog1", voltage1);
             telemetry.update();
 
-            RobotLog.d("analog0: " + voltage0);
+            //RobotLog.d("analog0: " + voltage0);
             RobotLog.d("analog1: " + voltage1);
             sleep(10);
             idle();

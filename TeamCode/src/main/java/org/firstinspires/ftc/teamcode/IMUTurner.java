@@ -105,8 +105,8 @@ public class IMUTurner extends DefaultStopper implements TurnerIF {
                 factor = (1.0 - _minFactor) * Math.pow(Math.abs(difference) / _slowDifference, _rampDown) + _minFactor;
             }
 
-//            RobotLog.d("IMUTurner::getSteeringFactor()::direction: " + direction);
-//            RobotLog.d("IMUTurner::getSteeringFactor()::factor: " + factor);
+            RobotLog.d("IMUTurner::getScaleFactor()::direction: " + direction);
+            RobotLog.d("IMUTurner::getScaleFactor()::factor: " + factor);
 
             return direction * factor;
         }

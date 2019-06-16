@@ -67,6 +67,10 @@ public interface DriverIF extends StopperIF {
                     && (((Steerage)object)._strafe == _strafe);
         }
 
+        public String toString() {
+            return "_left: " + _left + " _right: " + _right + " _strafe: " + _strafe;
+        }
+
         public static Steerage createStationary() {
             return _stationary;
         }

@@ -14,6 +14,7 @@ import com.qualcomm.robotcore.util.RobotLog;
  * and a for loop.
  */
 @TeleOp(name = "TestMotorsSimple", group = "Test")
+@Disabled
 public class TestMotorsSimple extends LinearOpMode
 {
     protected DcMotor _motorA;

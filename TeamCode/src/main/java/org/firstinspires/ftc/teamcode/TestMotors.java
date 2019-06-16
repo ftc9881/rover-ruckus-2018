@@ -14,6 +14,7 @@ import com.qualcomm.robotcore.util.RobotLog;
  * and a for loop.
  */
 @Autonomous(name = "TestMotors", group = "Test")
+@Disabled
 public class TestMotors extends LinearOpMode
 {
     protected DcMotor _motorA;
